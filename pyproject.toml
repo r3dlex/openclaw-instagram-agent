@@ -1,0 +1,55 @@
+[tool.poetry]
+name = "openclaw-instagram"
+version = "0.1.0"
+description = "OpenClaw Instagram engagement agent with API and browser fallback"
+authors = ["Redlex Gilgamesh"]
+license = "MIT"
+readme = "README.md"
+packages = [
+    {include = "openclaw_instagram", from = "src"},
+    {include = "tools"},
+]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+instagrapi = "^2.1.2"
+python-dotenv = "^1.0.1"
+pydantic = "^2.9"
+pydantic-settings = "^2.6"
+httpx = "^0.28"
+playwright = "^1.49"
+tenacity = "^9.0"
+structlog = "^24.4"
+pillow = ">=10.0,<12.0"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.3"
+pytest-asyncio = "^0.24"
+pytest-cov = "^6.0"
+ruff = "^0.8"
+mypy = "^1.13"
+respx = "^0.22"
+
+[tool.poetry.scripts]
+openclaw-instagram = "openclaw_instagram.cli:main"
+pipeline = "tools.pipeline_runner.cli:main"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W", "UP", "B", "SIM"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+warn_return_any = true
