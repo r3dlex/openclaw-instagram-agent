@@ -1,5 +1,7 @@
 # OpenClaw Instagram Agent
 
+[![CI](https://github.com/r3dlex/openclaw-instagram-agent/actions/workflows/ci.yml/badge.svg)](https://github.com/r3dlex/openclaw-instagram-agent/actions/workflows/ci.yml)
+
 An autonomous Instagram engagement agent powered by [OpenClaw](https://docs.openclaw.ai/). Likes posts and reels from configured target accounts, monitors DMs, and reports back through your preferred messaging channel.
 
 ## Features

@@ -113,6 +113,24 @@ Register in a pipeline in `tools/pipeline_runner/pipelines.py`:
 p.add_step(Step("my-check", my_check()))
 ```
 
+## GitHub Actions
+
+Pipelines run automatically on every push and PR via `.github/workflows/ci.yml`. Three parallel jobs map directly to pipeline commands:
+
+| Job | Pipeline | Trigger |
+|-----|----------|---------|
+| `ci` | `poetry run pipeline ci` | push to main, PRs |
+| `security` | `poetry run pipeline security` | push to main, PRs |
+| `docs` | `poetry run pipeline docs` | push to main, PRs |
+
+The CI workflow:
+1. Checks out the repo
+2. Sets up Python 3.11 + Poetry with dependency caching
+3. Copies `.env.example` to `.env` (dummy values, no real secrets)
+4. Runs the pipeline with `--json` output for structured CI logs
+
+No secrets are needed in GitHub Actions — all pipelines run with the dummy `.env.example` values. Instagram credentials are never required for CI.
+
 ## Testing Pipelines
 
 Pipeline engine and steps are tested in `tests/test_pipeline.py`. See `spec/TESTING.md` for how to run tests.

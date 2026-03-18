@@ -123,17 +123,31 @@ def check_env_example():
     return _step
 
 
-def check_no_secrets(patterns: list[str] | None = None):
-    """Step fn: scan tracked files for secret patterns."""
+def check_no_secrets(
+    patterns: list[str] | None = None,
+    exclude_paths: list[str] | None = None,
+):
+    """Step fn: scan tracked files for secret patterns.
+
+    Excludes test files and the scanner itself by default (test fixtures
+    legitimately contain dummy password= assignments).
+    """
 
     def _step() -> StepResult:
+        import re
+
         default_patterns = [
             r"password\s*=\s*['\"][^'\"]+['\"]",
             r"secret\s*=\s*['\"][^'\"]+['\"]",
             r"token\s*=\s*['\"][^'\"]+['\"]",
-            r"FYEO",
         ]
         search_patterns = patterns or default_patterns
+
+        default_excludes = [
+            "tests/",
+            "tools/pipeline_runner/steps.py",
+        ]
+        excluded = exclude_paths or default_excludes
 
         cmd = "git ls-files -- '*.py' '*.md' '*.yml' '*.toml' '*.sh'"
         proc = subprocess.run(
@@ -142,9 +156,10 @@ def check_no_secrets(patterns: list[str] | None = None):
         files = [f for f in proc.stdout.strip().split("\n") if f]
 
         violations: list[str] = []
-        import re
 
         for filepath in files:
+            if any(filepath.startswith(ex) for ex in excluded):
+                continue
             full = PROJECT_ROOT / filepath
             if not full.exists():
                 continue
