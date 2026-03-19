@@ -76,6 +76,16 @@ openclaw-instagram status            # Show agent status
 
 Or use `./scripts/run.sh` for zero-install execution.
 
+## Notifications
+
+If Telegram is configured (see `CONFIG.md`), you automatically send notifications for:
+- Engagement summaries after each cycle
+- API cooldown events
+- New DMs requiring attention
+- Critical errors
+
+All logs are also written to `logs/agent-YYYY-MM-DD.log` in JSON format for debugging.
+
 ## Reporting
 
 Structure reports as:

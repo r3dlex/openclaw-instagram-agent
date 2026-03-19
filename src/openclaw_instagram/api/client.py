@@ -33,11 +33,14 @@ API_FAILURE_FILE = SESSION_CACHE_DIR / "api_failure_timestamp"
 class InstagramAPIClient:
     """Instagram API client with session persistence and human-like delays."""
 
-    def __init__(self, settings: Settings) -> None:
+    def __init__(
+        self, settings: Settings, telegram_notifier: Any | None = None
+    ) -> None:
         self.settings = settings
         self.rate_limiter = RateLimiter(max_per_hour=settings.max_actions_per_hour)
         self._client: InstaClient | None = None
         self._api_available = True
+        self._telegram = telegram_notifier
 
     @property
     def api_available(self) -> bool:
@@ -65,6 +68,8 @@ class InstagramAPIClient:
             "api_marked_failed",
             retry_after_hours=self.settings.api_retry_hours,
         )
+        if self._telegram:
+            self._telegram.notify_api_cooldown(self.settings.api_retry_hours)
 
     def _get_client(self) -> InstaClient:
         """Get or create authenticated instagrapi client with session reuse."""

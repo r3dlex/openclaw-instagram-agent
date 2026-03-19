@@ -12,6 +12,7 @@ from openclaw_instagram.browser.fallback import BrowserFallback
 from openclaw_instagram.config import Settings, get_settings
 from openclaw_instagram.utils.human_delay import sleep_human
 from openclaw_instagram.utils.logging import setup_logging
+from openclaw_instagram.utils.telegram import TelegramNotifier
 
 logger = structlog.get_logger()
 
@@ -28,7 +29,13 @@ class InstagramAgent:
     def __init__(self, settings: Settings | None = None) -> None:
         self.settings = settings or get_settings()
         setup_logging(self.settings.log_level, self.settings.log_dir)
-        self.api = InstagramAPIClient(self.settings)
+        self.telegram = TelegramNotifier(
+            bot_token=self.settings.telegram_bot_token,
+            chat_id=self.settings.telegram_chat_id,
+        )
+        self.api = InstagramAPIClient(
+            self.settings, telegram_notifier=self.telegram
+        )
         self.browser = BrowserFallback(self.settings)
 
     def engage_accounts(self, usernames: list[str]) -> dict[str, Any]:
@@ -49,6 +56,7 @@ class InstagramAgent:
                 self.settings.max_action_delay_seconds,
             )
 
+        self.telegram.notify_engagement_done(results)
         return results
 
     def _engage_via_api(self, username: str) -> dict[str, Any]:
@@ -78,6 +86,7 @@ class InstagramAgent:
         except Exception as e:
             result["errors"].append(str(e))
             logger.error("browser_engagement_error", username=username, error=str(e))
+            self.telegram.notify_error("browser_engagement", str(e))
 
         logger.info("browser_engagement_done", username=username, liked=result["liked"])
         return result
@@ -97,9 +106,12 @@ class InstagramAgent:
                         "username": uname,
                         "source": "api",
                     })
-            return messages
         else:
-            return asyncio.run(self._check_dms_browser(filter_usernames))
+            messages = asyncio.run(self._check_dms_browser(filter_usernames))
+
+        if messages:
+            self.telegram.notify_dms(messages)
+        return messages
 
     async def _check_dms_browser(
         self, filter_usernames: list[str] | None = None

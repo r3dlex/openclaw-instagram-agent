@@ -93,10 +93,11 @@ cover/
 .DS_Store
 
 # ==============================
-# Logs
+# Logs (keep dir via .gitkeep, ignore contents)
 # ==============================
 *.log
-logs/
+logs/*
+!logs/.gitkeep
 reports/
 
 # ==============================

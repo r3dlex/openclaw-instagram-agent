@@ -28,7 +28,7 @@ poetry run pipeline ci       # Run full CI pipeline
 │   ├── agent.py            ← Orchestrator (API → browser failover)
 │   ├── config.py           ← Pydantic settings from .env
 │   ├── cli.py              ← CLI entry point
-│   └── utils/              ← Delays, rate limiting, logging
+│   └── utils/              ← Delays, rate limiting, logging, Telegram
 ├── tools/pipeline_runner/  ← Python CI pipelines
 │   ├── engine.py           ← Pipeline/Step execution engine
 │   ├── steps.py            ← Reusable step factories
@@ -42,6 +42,7 @@ poetry run pipeline ci       # Run full CI pipeline
 │   ├── TESTING.md          ← How to run and write tests
 │   ├── TROUBLESHOOTING.md  ← Common issues and fixes
 │   └── LEARNINGS.md        ← Runtime learnings (agent-maintained)
+├── logs/                   ← JSON log files (gitignored, .gitkeep tracked)
 ├── scripts/                ← Zero-install shell scripts
 ├── Dockerfile              ← Container build
 ├── docker-compose.yml      ← Service definitions
@@ -100,6 +101,7 @@ poetry run pipeline pre-commit  # Fast pre-commit checks
 - `USER.md` — personal user info
 - `IDENTITY.md` — agent identity (filled at runtime)
 - `session_cache/` — Instagram session cookies
+- `logs/*.log` — Runtime log files (only `.gitkeep` is tracked)
 
 ## Spec (progressive disclosure)
 

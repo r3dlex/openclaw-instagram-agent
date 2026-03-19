@@ -17,6 +17,10 @@ Key variables:
 | `BROWSER_CDP_PORT` | Browser CDP port for fallback |
 | `MAX_ACTIONS_PER_HOUR` | Rate limit (default: 20) |
 | `API_RETRY_HOURS` | Hours to wait before retrying API (default: 24) |
+| `TELEGRAM_BOT_TOKEN` | Telegram Bot API token (optional) |
+| `TELEGRAM_CHAT_ID` | Telegram chat ID for notifications (optional) |
+| `LOG_LEVEL` | Logging level (default: INFO) |
+| `LOG_DIR` | Directory for JSON log files (default: ./logs) |
 
 ## Tools
 
@@ -41,6 +45,20 @@ When the API is rate-limited or challenged, the agent automatically falls back t
 Configure CDP connection in `.env`:
 - `BROWSER_CDP_HOST` — default `127.0.0.1`
 - `BROWSER_CDP_PORT` — default `9222`
+
+## Telegram Notifications
+
+When `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID` are set, the agent sends notifications for:
+- Engagement cycle completions (accounts processed, likes, errors)
+- API cooldown activation (with retry time)
+- New DMs requiring attention
+- Critical errors
+
+If credentials are not set, notifications silently no-op.
+
+## Logging
+
+The agent writes JSON-formatted logs to `logs/agent-YYYY-MM-DD.log` daily. Console output uses human-readable format. Configure via `LOG_LEVEL` and `LOG_DIR` in `.env`.
 
 ## Contact Lists
 

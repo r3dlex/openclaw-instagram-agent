@@ -42,6 +42,7 @@ tests/
 ├── test_config.py           # Configuration loading and validation (ARCH-003)
 ├── test_human_delay.py      # Delay utilities and rate limiter (ARCH-002)
 ├── test_agent.py            # Agent orchestration logic (ARCH-001)
+├── test_telegram.py         # Telegram notifier (notifications)
 ├── test_pipeline.py         # Pipeline engine (ARCH-005)
 └── test_pipeline_steps.py   # Pipeline step factories (ARCH-005)
 ```
@@ -54,6 +55,7 @@ tests/
 | `test_human_delay.py` | Jitter bounds, rate limiter logic, hour pruning | ARCH-002 |
 | `test_agent.py` | API-first routing, browser fallback on cooldown | ARCH-001 |
 | `test_pipeline.py` | Pipeline engine: pass/fail/skip/continue, decorators | ARCH-005 |
+| `test_telegram.py` | Notifier: send, no-op, engagement/cooldown/DM/error alerts | — |
 | `test_pipeline_steps.py` | Step factories: env check, ADR check, docs check | ARCH-005 |
 
 ## Test Philosophy
