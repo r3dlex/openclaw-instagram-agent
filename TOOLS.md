@@ -18,9 +18,13 @@ The agent can connect to an existing browser via CDP for Instagram web automatio
 
 Check `./logs/` for structured JSON logs. Set `LOG_LEVEL=DEBUG` in `.env` for verbose output.
 
+## Two-Factor Authentication
+
+If your Instagram account has 2FA enabled, set `IG_2FA_SEED` in `.env` with your TOTP seed. The agent generates codes automatically during login. See `CONFIG.md` for details.
+
 ## Session State
 
-- `session_cache/session.json` — Instagram API session (auto-managed)
+- `session_cache/session.json` — Instagram API session (auto-managed, minimizes 2FA prompts)
 - `session_cache/api_failure_timestamp` — API cooldown marker
 
 To reset: `rm -rf session_cache/`

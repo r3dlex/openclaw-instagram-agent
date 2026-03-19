@@ -21,6 +21,16 @@ The agent self-limits to `MAX_ACTIONS_PER_HOUR` (default 20). If Instagram's own
 2. Reduce `MAX_ACTIONS_PER_HOUR` in `.env`
 3. Increase `MIN_ACTION_DELAY_SECONDS` and `MAX_ACTION_DELAY_SECONDS`
 
+### Two-Factor Authentication (2FA) failures
+
+Instagram requires a 2FA code but login fails.
+
+**Fix:**
+1. Ensure `IG_2FA_SEED` is set in `.env` with the base32 TOTP seed from your authenticator app setup
+2. Verify the seed is correct by generating a code with `python -c "import pyotp; print(pyotp.TOTP('YOUR_SEED').now())"` and comparing with your authenticator app
+3. If using SMS-based 2FA (not TOTP), switch to an authenticator app — SMS codes cannot be auto-generated
+4. Session reuse (`session_cache/`) reduces how often 2FA is needed; delete `session_cache/session.json` to force a fresh login with 2FA
+
 ### Session expired / Login required
 
 Session cookies become stale periodically.

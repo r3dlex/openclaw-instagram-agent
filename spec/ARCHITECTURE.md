@@ -53,6 +53,7 @@ All key decisions are tracked as ADRs in `.archgate/adrs/` following the [archga
 Primary method using [instagrapi](https://github.com/subzeroid/instagrapi), a maintained Python wrapper for Instagram's private API.
 
 - **Session persistence**: Saves/restores session cookies to `session_cache/`
+- **2FA/TOTP support**: Automatic TOTP code generation via `pyotp` when `IG_2FA_SEED` is configured
 - **Human-like delays**: Gaussian-jittered delays (see ARCH-002)
 - **Self-imposed rate limits**: Configurable `MAX_ACTIONS_PER_HOUR`
 - **Automatic cooldown**: On rate limit or challenge, marks API unavailable for `API_RETRY_HOURS`
