@@ -18,6 +18,7 @@ class Settings(BaseSettings):
     # Instagram credentials
     instagram_username: str = ""
     instagram_password: str = ""
+    ig_2fa_seed: str = ""  # TOTP seed for 2FA (from authenticator app setup)
 
     # Instagram Graph API (optional)
     instagram_access_token: str = ""

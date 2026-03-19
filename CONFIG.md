@@ -10,6 +10,7 @@ Key variables:
 |----------|---------|
 | `INSTAGRAM_USERNAME` | Instagram login |
 | `INSTAGRAM_PASSWORD` | Instagram password |
+| `IG_2FA_SEED` | TOTP seed for 2FA auto-login (optional) |
 | `TARGET_ACCOUNTS_A` | Comma-separated List A usernames |
 | `TARGET_ACCOUNTS_B` | Comma-separated List B usernames |
 | `TARGET_ACCOUNTS_C` | Comma-separated List C usernames |
@@ -37,6 +38,14 @@ Or via Docker:
 ```bash
 docker compose run --rm agent engage --list a
 ```
+
+## Two-Factor Authentication (2FA)
+
+If your Instagram account has 2FA enabled with an authenticator app (TOTP), set `IG_2FA_SEED` in `.env` to the base32 seed from your authenticator setup QR code. The agent will auto-generate 2FA codes during login — no manual input needed.
+
+If `IG_2FA_SEED` is not set and Instagram requires 2FA, login will fail with a clear error message.
+
+Session reuse (`session_cache/`) means 2FA is only needed on fresh logins or session expiry.
 
 ## Browser Fallback
 

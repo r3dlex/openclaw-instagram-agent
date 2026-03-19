@@ -18,6 +18,7 @@ from instagrapi.exceptions import (
     LoginRequired,
     PleaseWaitFewMinutes,
     RateLimitError,
+    TwoFactorRequired,
 )
 
 from openclaw_instagram.config import Settings
@@ -71,6 +72,33 @@ class InstagramAPIClient:
         if self._telegram:
             self._telegram.notify_api_cooldown(self.settings.api_retry_hours)
 
+    def _generate_2fa_code(self) -> str:
+        """Generate a TOTP 2FA code from the seed, if configured."""
+        import pyotp
+
+        return pyotp.TOTP(self.settings.ig_2fa_seed).now()
+
+    def _login_with_2fa(self, client: InstaClient) -> None:
+        """Login handling 2FA via TOTP seed or raising on SMS-only."""
+        try:
+            client.login(
+                self.settings.instagram_username,
+                self.settings.instagram_password,
+            )
+        except TwoFactorRequired:
+            if not self.settings.ig_2fa_seed:
+                raise RuntimeError(
+                    "Instagram requires 2FA but IG_2FA_SEED is not set. "
+                    "Add your TOTP seed to .env to enable automatic 2FA."
+                ) from None
+            code = self._generate_2fa_code()
+            logger.info("2fa_totp_generated")
+            client.login(
+                self.settings.instagram_username,
+                self.settings.instagram_password,
+                verification_code=code,
+            )
+
     def _get_client(self) -> InstaClient:
         """Get or create authenticated instagrapi client with session reuse."""
         if self._client is not None:
@@ -90,7 +118,7 @@ class InstagramAPIClient:
             try:
                 session_data = json.loads(SESSION_FILE.read_text())
                 client.set_settings(session_data)
-                client.login(self.settings.instagram_username, self.settings.instagram_password)
+                self._login_with_2fa(client)
                 logger.info("session_restored")
                 self._client = client
                 return client
@@ -99,7 +127,7 @@ class InstagramAPIClient:
                 SESSION_FILE.unlink(missing_ok=True)
 
         # Fresh login
-        client.login(self.settings.instagram_username, self.settings.instagram_password)
+        self._login_with_2fa(client)
         SESSION_FILE.write_text(json.dumps(client.get_settings()))
         logger.info("fresh_login_success")
         self._client = client
