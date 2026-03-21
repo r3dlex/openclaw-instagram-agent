@@ -23,7 +23,7 @@ Key variables:
 | `LOG_LEVEL` | Logging level (default: INFO) |
 | `LOG_DIR` | Directory for JSON log files (default: ./logs) |
 | `IAMQ_ENABLED` | Enable inter-agent message queue (default: false) |
-| `IAMQ_URL` | IAMQ service URL (default: http://127.0.0.1:18790) |
+| `IAMQ_HTTP_URL` | IAMQ service URL (default: http://127.0.0.1:18790) |
 | `IAMQ_AGENT_ID` | Agent identity in the queue (default: instagram_agent) |
 | `IAMQ_HEARTBEAT_INTERVAL` | Heartbeat interval in seconds (default: 240) |
 | `IAMQ_POLL_INTERVAL` | Inbox poll interval in seconds (default: 30) |

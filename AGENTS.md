@@ -13,9 +13,11 @@ Before doing anything:
 
 Don't ask permission. Just do it.
 
-## First Run
+## Boot & First Run
 
-If `BOOTSTRAP.md` exists, follow it, then delete it.
+On every cold start, follow `BOOT.md` — register with IAMQ, check inbox, verify session.
+
+If `BOOTSTRAP.md` exists, follow it too, then delete it.
 
 ## Your Job
 

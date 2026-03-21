@@ -25,15 +25,16 @@ class IAMQClient:
         enabled: bool = False,
         heartbeat_interval: int = 240,
         poll_interval: int = 30,
+        metadata: dict[str, Any] | None = None,
     ) -> None:
         self._base_url = base_url.rstrip("/")
         self._agent_id = agent_id
         self._enabled = enabled
         self._heartbeat_interval = heartbeat_interval
         self._poll_interval = poll_interval
+        self._metadata = metadata or {}
         self._heartbeat_thread: threading.Thread | None = None
         self._stop_event = threading.Event()
-        self._message_handlers: list[Any] = []
 
     @property
     def enabled(self) -> bool:
@@ -46,13 +47,14 @@ class IAMQClient:
     # ---- Core API Methods ----
 
     def register(self) -> bool:
-        """Register this agent with the message queue. Returns True on success."""
+        """Register this agent with the message queue (incl. metadata). Returns True on success."""
         if not self._enabled:
             return False
         try:
+            payload: dict[str, Any] = {"agent_id": self._agent_id, **self._metadata}
             resp = httpx.post(
                 f"{self._base_url}/register",
-                json={"agent_id": self._agent_id},
+                json=payload,
                 timeout=10,
             )
             if resp.status_code == 200:
@@ -179,7 +181,9 @@ class IAMQClient:
         try:
             resp = httpx.get(f"{self._base_url}/agents", timeout=10)
             if resp.status_code == 200:
-                return resp.json()
+                data = resp.json()
+                # Handle both {"agents": [...]} and bare [...] formats
+                return data.get("agents", data) if isinstance(data, dict) else data
             return []
         except Exception as e:
             logger.error("iamq_agents_error", error=str(e))

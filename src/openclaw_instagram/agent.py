@@ -35,11 +35,25 @@ class InstagramAgent:
             chat_id=self.settings.telegram_chat_id,
         )
         self.iamq = IAMQClient(
-            base_url=self.settings.iamq_url,
+            base_url=self.settings.iamq_http_url,
             agent_id=self.settings.iamq_agent_id,
             enabled=self.settings.iamq_enabled,
             heartbeat_interval=self.settings.iamq_heartbeat_interval,
             poll_interval=self.settings.iamq_poll_interval,
+            metadata={
+                "name": "InstaOps",
+                "emoji": "\U0001f4f8",
+                "description": (
+                    "Autonomous Instagram engagement agent "
+                    "-- likes posts/reels, monitors DMs, reports via Telegram"
+                ),
+                "capabilities": [
+                    "instagram_engage",
+                    "instagram_dms",
+                    "instagram_like",
+                    "instagram_status",
+                ],
+            },
         )
         self.api = InstagramAPIClient(
             self.settings, telegram_notifier=self.telegram, iamq_client=self.iamq

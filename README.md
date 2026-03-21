@@ -89,7 +89,7 @@ All configuration via environment variables. See [.env.example](.env.example) fo
 | `LOG_LEVEL` | INFO | Logging level |
 | `LOG_DIR` | ./logs | JSON log file directory |
 | `IAMQ_ENABLED` | false | Enable inter-agent message queue |
-| `IAMQ_URL` | http://127.0.0.1:18790 | IAMQ service URL |
+| `IAMQ_HTTP_URL` | http://127.0.0.1:18790 | IAMQ service URL |
 | `IAMQ_AGENT_ID` | instagram_agent | This agent's ID in the queue |
 
 ## Pipelines

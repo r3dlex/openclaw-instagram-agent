@@ -45,7 +45,7 @@ class Settings(BaseSettings):
     api_retry_hours: int = 24
 
     # Inter-Agent Message Queue (IAMQ)
-    iamq_url: str = "http://127.0.0.1:18790"
+    iamq_http_url: str = "http://127.0.0.1:18790"
     iamq_agent_id: str = "instagram_agent"
     iamq_enabled: bool = False
     iamq_heartbeat_interval: int = 240  # seconds between heartbeats
