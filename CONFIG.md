@@ -22,6 +22,11 @@ Key variables:
 | `TELEGRAM_CHAT_ID` | Telegram chat ID for notifications (optional) |
 | `LOG_LEVEL` | Logging level (default: INFO) |
 | `LOG_DIR` | Directory for JSON log files (default: ./logs) |
+| `IAMQ_ENABLED` | Enable inter-agent message queue (default: false) |
+| `IAMQ_URL` | IAMQ service URL (default: http://127.0.0.1:18790) |
+| `IAMQ_AGENT_ID` | Agent identity in the queue (default: instagram_agent) |
+| `IAMQ_HEARTBEAT_INTERVAL` | Heartbeat interval in seconds (default: 240) |
+| `IAMQ_POLL_INTERVAL` | Inbox poll interval in seconds (default: 30) |
 
 ## Tools
 
@@ -64,6 +69,24 @@ When `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID` are set, the agent sends notifi
 - Critical errors
 
 If credentials are not set, notifications silently no-op.
+
+## Inter-Agent Message Queue (IAMQ)
+
+When `IAMQ_ENABLED=true`, the agent registers with the [openclaw-inter-agent-message-queue](https://github.com/r3dlex/openclaw-inter-agent-message-queue) service for peer-to-peer communication with other agents.
+
+On startup, the agent:
+1. Registers with the queue using `IAMQ_AGENT_ID`
+2. Starts a background heartbeat thread (every `IAMQ_HEARTBEAT_INTERVAL` seconds)
+3. Broadcasts engagement summaries, errors, and API cooldowns to all peer agents
+
+CLI commands for IAMQ:
+```bash
+openclaw-instagram agents   # List registered peer agents
+openclaw-instagram inbox    # Check unread messages from other agents
+openclaw-instagram status   # Shows IAMQ status and peer count
+```
+
+If the IAMQ service is not running, all messaging operations gracefully no-op.
 
 ## Logging
 

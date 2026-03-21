@@ -35,6 +35,12 @@ def main() -> None:
     # status command
     sub.add_parser("status", help="Show current agent status")
 
+    # agents command (IAMQ peer discovery)
+    sub.add_parser("agents", help="List agents registered with the message queue")
+
+    # inbox command (IAMQ messages)
+    sub.add_parser("inbox", help="Check unread messages from the message queue")
+
     args = parser.parse_args()
 
     if not args.command:
@@ -66,6 +72,27 @@ def main() -> None:
             print(f"  A: {settings.accounts_a}")
             print(f"  B: {settings.accounts_b}")
             print(f"  C: {settings.accounts_c}")
+            print(f"IAMQ: {'enabled' if agent.iamq.enabled else 'disabled'}")
+            if agent.iamq.enabled:
+                print(f"  Agent ID: {agent.iamq.agent_id}")
+                peers = agent.get_peer_agents()
+                print(f"  Peer agents: {len(peers)}")
+                for p in peers:
+                    print(f"    - {p.get('id', p)}")
+
+        elif args.command == "agents":
+            if not agent.iamq.enabled:
+                print("IAMQ is not enabled. Set IAMQ_ENABLED=true in .env")
+                sys.exit(1)
+            peers = agent.get_peer_agents()
+            print(json.dumps(peers, indent=2, default=str))
+
+        elif args.command == "inbox":
+            if not agent.iamq.enabled:
+                print("IAMQ is not enabled. Set IAMQ_ENABLED=true in .env")
+                sys.exit(1)
+            messages = agent.poll_iamq()
+            print(json.dumps(messages, indent=2, default=str))
     finally:
         agent.close()
 

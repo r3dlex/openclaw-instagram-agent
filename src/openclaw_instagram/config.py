@@ -44,6 +44,13 @@ class Settings(BaseSettings):
     max_action_delay_seconds: int = 120
     api_retry_hours: int = 24
 
+    # Inter-Agent Message Queue (IAMQ)
+    iamq_url: str = "http://127.0.0.1:18790"
+    iamq_agent_id: str = "instagram_agent"
+    iamq_enabled: bool = False
+    iamq_heartbeat_interval: int = 240  # seconds between heartbeats
+    iamq_poll_interval: int = 30  # seconds between inbox polls
+
     # Logging
     log_level: str = "INFO"
     log_dir: Path = Field(default=Path("./logs"))

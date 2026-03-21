@@ -11,6 +11,7 @@ from openclaw_instagram.api.client import InstagramAPIClient
 from openclaw_instagram.browser.fallback import BrowserFallback
 from openclaw_instagram.config import Settings, get_settings
 from openclaw_instagram.utils.human_delay import sleep_human
+from openclaw_instagram.utils.iamq import IAMQClient
 from openclaw_instagram.utils.logging import setup_logging
 from openclaw_instagram.utils.telegram import TelegramNotifier
 
@@ -33,10 +34,18 @@ class InstagramAgent:
             bot_token=self.settings.telegram_bot_token,
             chat_id=self.settings.telegram_chat_id,
         )
+        self.iamq = IAMQClient(
+            base_url=self.settings.iamq_url,
+            agent_id=self.settings.iamq_agent_id,
+            enabled=self.settings.iamq_enabled,
+            heartbeat_interval=self.settings.iamq_heartbeat_interval,
+            poll_interval=self.settings.iamq_poll_interval,
+        )
         self.api = InstagramAPIClient(
-            self.settings, telegram_notifier=self.telegram
+            self.settings, telegram_notifier=self.telegram, iamq_client=self.iamq
         )
         self.browser = BrowserFallback(self.settings)
+        self.iamq.start()
 
     def engage_accounts(self, usernames: list[str]) -> dict[str, Any]:
         """Run engagement cycle on a list of accounts. Returns summary."""
@@ -57,6 +66,7 @@ class InstagramAgent:
             )
 
         self.telegram.notify_engagement_done(results)
+        self.iamq.announce_engagement(results)
         return results
 
     def _engage_via_api(self, username: str) -> dict[str, Any]:
@@ -87,6 +97,7 @@ class InstagramAgent:
             result["errors"].append(str(e))
             logger.error("browser_engagement_error", username=username, error=str(e))
             self.telegram.notify_error("browser_engagement", str(e))
+            self.iamq.announce_error("browser_engagement", str(e))
 
         logger.info("browser_engagement_done", username=username, liked=result["liked"])
         return result
@@ -125,7 +136,16 @@ class InstagramAgent:
             for t in threads
         ]
 
+    def poll_iamq(self) -> list[dict[str, Any]]:
+        """Poll IAMQ inbox for messages from other agents."""
+        return self.iamq.inbox(status="unread")
+
+    def get_peer_agents(self) -> list[dict[str, Any]]:
+        """Discover other agents registered with the message queue."""
+        return self.iamq.get_agents()
+
     def close(self) -> None:
         """Clean up all resources."""
+        self.iamq.stop()
         self.api.close()
         asyncio.run(self.browser.close())

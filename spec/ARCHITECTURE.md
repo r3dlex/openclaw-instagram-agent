@@ -103,7 +103,17 @@ Dual-output structured logging:
 - **Console**: Human-readable via `structlog.dev.ConsoleRenderer`
 - **File**: JSON lines to `logs/agent-YYYY-MM-DD.log` for machine parsing
 
-### 8. Pipeline Runner (`tools/pipeline_runner/`)
+### 8. IAMQ Client (`src/openclaw_instagram/utils/iamq.py`)
+
+HTTP client for the [Inter-Agent Message Queue](https://github.com/r3dlex/openclaw-inter-agent-message-queue) service. Enables agent-to-agent communication:
+- **Registration**: Announces presence on startup
+- **Heartbeat**: Background thread keeps registration alive (every 4 min)
+- **Messaging**: Sends direct messages or broadcasts to all peers
+- **Inbox polling**: Fetches unread messages from other agents
+- **Discovery**: Lists all registered peer agents
+- Gracefully no-ops when disabled or when the IAMQ service is unreachable
+
+### 9. Pipeline Runner (`tools/pipeline_runner/`)
 
 > ADR: [ARCH-005](../.archgate/adrs/ARCH-005-pipeline-assured-quality.md)
 
@@ -118,6 +128,7 @@ Heartbeat/Command → Agent.engage_accounts(list_a)
     → If API cooldown:  Browser.like_latest_posts()
     → Human delay between accounts (ARCH-002)
   → Telegram: notify engagement summary
+  → IAMQ: broadcast engagement results to peer agents
   → Return summary report
 ```
 
@@ -132,6 +143,7 @@ Heartbeat/Command → Agent.engage_accounts(list_a)
 | Reply approval | ARCH-006 | All text replies require human approval |
 | Secret scan | ARCH-003 | No credentials in tracked files |
 | Telegram alerts | — | Real-time notification of errors and cooldowns |
+| IAMQ broadcasts | — | Peer agents informed of status changes and errors |
 | File logging | — | JSON audit trail in `logs/` |
 
 ## Deployment

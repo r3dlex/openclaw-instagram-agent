@@ -44,6 +44,7 @@ tests/
 ├── test_agent.py            # Agent orchestration logic (ARCH-001)
 ├── test_api_client.py       # API client login, 2FA/TOTP flow (ARCH-001)
 ├── test_telegram.py         # Telegram notifier (notifications)
+├── test_iamq.py             # Inter-agent message queue client
 ├── test_pipeline.py         # Pipeline engine (ARCH-005)
 └── test_pipeline_steps.py   # Pipeline step factories (ARCH-005)
 ```
@@ -58,6 +59,7 @@ tests/
 | `test_api_client.py` | Login flow, TOTP 2FA, missing seed error, code generation | ARCH-001 |
 | `test_pipeline.py` | Pipeline engine: pass/fail/skip/continue, decorators | ARCH-005 |
 | `test_telegram.py` | Notifier: send, no-op, engagement/cooldown/DM/error alerts | — |
+| `test_iamq.py` | IAMQ client: register, heartbeat, send, inbox, broadcast, lifecycle | — |
 | `test_pipeline_steps.py` | Step factories: env check, ADR check, docs check | ARCH-005 |
 
 ## Test Philosophy

@@ -72,6 +72,8 @@ Check `TOOLS.md` for environment-specific notes. The Python package provides:
 openclaw-instagram engage --list a   # Run engagement cycle
 openclaw-instagram dms --list a      # Check DMs
 openclaw-instagram status            # Show agent status
+openclaw-instagram agents            # List peer agents (IAMQ)
+openclaw-instagram inbox             # Check messages from peer agents (IAMQ)
 ```
 
 Or use `./scripts/run.sh` for zero-install execution.
@@ -85,6 +87,16 @@ If Telegram is configured (see `CONFIG.md`), you automatically send notification
 - Critical errors
 
 All logs are also written to `logs/agent-YYYY-MM-DD.log` in JSON format for debugging.
+
+## Inter-Agent Communication
+
+When IAMQ is enabled (see `CONFIG.md`), you are connected to other agents in the environment. You automatically:
+- Register on startup and send periodic heartbeats
+- Broadcast engagement results, errors, and API cooldowns to all peers
+- Can discover peer agents via `openclaw-instagram agents`
+- Can check for messages from peers via `openclaw-instagram inbox`
+
+Use this to coordinate with other agents (e.g., a mail agent, librarian, or scheduler).
 
 ## Reporting
 

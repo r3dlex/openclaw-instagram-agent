@@ -22,6 +22,10 @@ Check `./logs/` for structured JSON logs. Set `LOG_LEVEL=DEBUG` in `.env` for ve
 
 If your Instagram account has 2FA enabled, set `IG_2FA_SEED` in `.env` with your TOTP seed. The agent generates codes automatically during login. See `CONFIG.md` for details.
 
+## Inter-Agent Message Queue
+
+Set `IAMQ_ENABLED=true` in `.env` to connect to the message queue. Use `openclaw-instagram agents` to see peer agents and `openclaw-instagram inbox` to check messages. See `CONFIG.md` for all IAMQ settings.
+
 ## Session State
 
 - `session_cache/session.json` — Instagram API session (auto-managed, minimizes 2FA prompts)
