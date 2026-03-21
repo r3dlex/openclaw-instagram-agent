@@ -81,8 +81,8 @@ All configuration via environment variables. See [.env.example](.env.example) fo
 | `IG_2FA_SEED` | — | TOTP seed for auto 2FA (optional) |
 | `TARGET_ACCOUNTS_A` | — | Comma-separated engagement targets |
 | `MAX_ACTIONS_PER_HOUR` | 20 | Self-imposed rate limit |
-| `MIN_ACTION_DELAY_SECONDS` | 30 | Minimum delay between actions |
-| `MAX_ACTION_DELAY_SECONDS` | 120 | Maximum delay between actions |
+| `MIN_ACTION_DELAY_SECONDS` | 10 | Minimum delay between actions |
+| `MAX_ACTION_DELAY_SECONDS` | 30 | Maximum delay between actions |
 | `API_RETRY_HOURS` | 24 | Hours to wait before retrying API |
 | `TELEGRAM_BOT_TOKEN` | — | Telegram Bot token (optional) |
 | `TELEGRAM_CHAT_ID` | — | Telegram chat for notifications (optional) |
@@ -112,6 +112,7 @@ This agent uses the [OpenClaw](https://docs.openclaw.ai/) workspace template:
 |------|---------|
 | `AGENTS.md` | Agent workspace instructions |
 | `SOUL.md` | Identity, engagement rules, contact lists |
+| `BOOT.md` | Startup tasks (IAMQ registration, session check) |
 | `CONFIG.md` | Runtime configuration reference |
 | `HEARTBEAT.md` | Periodic task definitions |
 | `TOOLS.md` | Environment-specific notes |

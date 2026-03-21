@@ -18,9 +18,10 @@ poetry run pipeline ci       # Run full CI pipeline
 ```
 ├── CLAUDE.md               ← You are here (for dev agents: Claude, Copilot, etc.)
 ├── AGENTS.md               ← For the OpenClaw runtime agent
-├── SOUL.md                 ← Agent personality and engagement rules
+├── SOUL.md                 ← Agent personality, engagement rules, IAMQ comms
+├── BOOT.md                 ← Startup tasks (IAMQ registration, inbox check)
 ├── CONFIG.md               ← Agent runtime config (reads from .env)
-├── HEARTBEAT.md            ← Periodic task config for OpenClaw heartbeats
+├── HEARTBEAT.md            ← Periodic tasks (IAMQ heartbeat, inbox, engage)
 ├── TOOLS.md                ← Agent tool/environment notes
 ├── src/openclaw_instagram/ ← Python package
 │   ├── api/client.py       ← instagrapi-based Instagram client
@@ -28,7 +29,7 @@ poetry run pipeline ci       # Run full CI pipeline
 │   ├── agent.py            ← Orchestrator (API → browser failover)
 │   ├── config.py           ← Pydantic settings from .env
 │   ├── cli.py              ← CLI entry point
-│   └── utils/              ← Delays, rate limiting, logging, Telegram
+│   └── utils/              ← Delays, rate limiting, logging, Telegram, IAMQ
 ├── tools/pipeline_runner/  ← Python CI pipelines
 │   ├── engine.py           ← Pipeline/Step execution engine
 │   ├── steps.py            ← Reusable step factories
@@ -55,8 +56,10 @@ poetry run pipeline ci       # Run full CI pipeline
 |------|----------|---------|
 | `CLAUDE.md` | Dev agents (you) | How to develop, test, and improve the codebase |
 | `AGENTS.md` | OpenClaw agent | How to operate at runtime (engage, monitor, report) |
-| `SOUL.md` | OpenClaw agent | Identity, rules, contact lists |
+| `SOUL.md` | OpenClaw agent | Identity, rules, contact lists, IAMQ comms |
+| `BOOT.md` | OpenClaw agent | Startup tasks (IAMQ registration, inbox) |
 | `CONFIG.md` | OpenClaw agent | Runtime configuration references |
+| `HEARTBEAT.md` | OpenClaw agent | Periodic tasks (IAMQ heartbeat, engagement) |
 | `spec/*` | Both | Deep docs, architecture, pipelines, troubleshooting |
 | `.archgate/adrs/*` | Both | Architecture Decision Records |
 
