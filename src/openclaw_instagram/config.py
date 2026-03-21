@@ -40,8 +40,8 @@ class Settings(BaseSettings):
 
     # Rate limiting
     max_actions_per_hour: int = 20
-    min_action_delay_seconds: int = 30
-    max_action_delay_seconds: int = 120
+    min_action_delay_seconds: int = 10
+    max_action_delay_seconds: int = 30
     api_retry_hours: int = 24
 
     # Inter-Agent Message Queue (IAMQ)
