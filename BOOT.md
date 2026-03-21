@@ -7,14 +7,15 @@ On first session or cold start, execute these steps before normal operations.
 Register yourself with the IAMQ so peer agents can discover and message you:
 
 ```bash
-curl -X POST http://127.0.0.1:18790/register \
+curl -s -X POST http://127.0.0.1:18790/register \
   -H "Content-Type: application/json" \
   -d '{
     "agent_id": "instagram_agent",
-    "name": "InstaOps",
+    "name": "InstaOps 📸",
     "emoji": "📸",
-    "description": "Autonomous Instagram engagement agent -- likes posts/reels, monitors DMs, reports via Telegram",
-    "capabilities": ["instagram_engage", "instagram_dms", "instagram_like", "instagram_status"]
+    "description": "Autonomous Instagram engagement agent — likes posts/reels, monitors DMs, reports via Telegram",
+    "capabilities": ["instagram_engage", "instagram_dms", "instagram_like", "instagram_status"],
+    "workspace": "/Users/redlexgilgamesh/Ws/Openclaw/openclaw-instagram-agent"
   }'
 ```
 

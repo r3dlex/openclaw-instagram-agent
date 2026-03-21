@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+from pathlib import Path
 from typing import Any
 
 import structlog
@@ -41,11 +42,11 @@ class InstagramAgent:
             heartbeat_interval=self.settings.iamq_heartbeat_interval,
             poll_interval=self.settings.iamq_poll_interval,
             metadata={
-                "name": "InstaOps",
+                "name": "InstaOps \U0001f4f8",
                 "emoji": "\U0001f4f8",
                 "description": (
                     "Autonomous Instagram engagement agent "
-                    "-- likes posts/reels, monitors DMs, reports via Telegram"
+                    "\u2014 likes posts/reels, monitors DMs, reports via Telegram"
                 ),
                 "capabilities": [
                     "instagram_engage",
@@ -53,6 +54,7 @@ class InstagramAgent:
                     "instagram_like",
                     "instagram_status",
                 ],
+                "workspace": str(Path.cwd()),
             },
         )
         self.api = InstagramAPIClient(
