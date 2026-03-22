@@ -7,6 +7,7 @@ agent-to-agent communication, discovery, and coordination.
 from __future__ import annotations
 
 import threading
+from pathlib import Path
 from typing import Any
 
 import httpx
@@ -17,6 +18,27 @@ logger = structlog.get_logger()
 
 class IAMQClient:
     """HTTP client for the Inter-Agent Message Queue service."""
+
+    # Default registration metadata for agent discovery
+    _DEFAULT_METADATA: dict[str, Any] = {
+        "name": "InstaOps",
+        "emoji": "\U0001f4f8",  # 📸
+        "description": (
+            "Instagram engagement automation. Likes posts/reels from configured "
+            "target accounts, monitors DMs, and reports through messaging channels."
+        ),
+        "capabilities": [
+            "instagram_engagement",
+            "post_liking",
+            "reel_liking",
+            "dm_monitoring",
+            "account_monitoring",
+            "engagement_reporting",
+            "api_fallback",
+            "browser_automation",
+            "rate_limiting",
+        ],
+    }
 
     def __init__(
         self,
@@ -32,7 +54,14 @@ class IAMQClient:
         self._enabled = enabled
         self._heartbeat_interval = heartbeat_interval
         self._poll_interval = poll_interval
-        self._metadata = metadata or {}
+        # Merge caller metadata over defaults so description/workspace are always present
+        merged = {**self._DEFAULT_METADATA}
+        if metadata:
+            merged.update(metadata)
+        # Always include workspace for agent discovery
+        if "workspace" not in merged:
+            merged["workspace"] = str(Path(__file__).resolve().parent.parent.parent.parent)
+        self._metadata = merged
         self._heartbeat_thread: threading.Thread | None = None
         self._stop_event = threading.Event()
 
