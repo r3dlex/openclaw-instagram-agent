@@ -4,9 +4,14 @@ from openclaw_instagram.config import Settings
 
 
 def test_default_settings():
-    s = Settings(instagram_username="u", instagram_password="p")
+    """Code defaults are applied when no env overrides are provided."""
+    s = Settings(
+        instagram_username="u",
+        instagram_password="p",
+        _env_file=None,  # Prevent .env from overriding code defaults
+    )
     assert s.max_actions_per_hour == 20
-    assert s.min_action_delay_seconds == 30
+    assert s.min_action_delay_seconds == 10
     assert s.api_retry_hours == 24
 
 

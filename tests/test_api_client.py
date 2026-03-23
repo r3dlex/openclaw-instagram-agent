@@ -41,9 +41,16 @@ def test_login_without_2fa(mock_cls, tmp_path):
     mock_client.login.assert_called_once_with("test_user", "test_pass")
 
 
+@patch("openclaw_instagram.api.client.SESSION_CACHE_DIR")
+@patch("openclaw_instagram.api.client.SESSION_FILE")
 @patch("openclaw_instagram.api.client.InstaClient")
-def test_login_with_2fa_totp(mock_cls, tmp_path):
+def test_login_with_2fa_totp(mock_cls, mock_session_file, mock_cache_dir, tmp_path):
     """When 2FA is required and IG_2FA_SEED is set, TOTP code is generated."""
+    # Ensure no stale session triggers the restore path
+    mock_session_file.exists.return_value = False
+    mock_session_file.write_text = MagicMock()
+    mock_cache_dir.mkdir = MagicMock()
+
     mock_client = MagicMock()
     mock_cls.return_value = mock_client
     mock_client.get_settings.return_value = {"key": "val"}

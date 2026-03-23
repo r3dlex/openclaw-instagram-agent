@@ -33,13 +33,20 @@ def test_disabled_noop():
 
 @patch("openclaw_instagram.utils.iamq.httpx.post")
 def test_register_success(mock_post):
-    """Successful registration returns True."""
+    """Successful registration returns True and sends full metadata."""
     mock_post.return_value = MagicMock(status_code=200)
     client = _make_client()
     assert client.register() is True
     mock_post.assert_called_once()
-    call_kwargs = mock_post.call_args
-    assert call_kwargs.kwargs["json"] == {"agent_id": "test_agent"}
+    payload = mock_post.call_args.kwargs["json"]
+    assert payload["agent_id"] == "test_agent"
+    # Registration must include discovery metadata
+    assert "name" in payload
+    assert "emoji" in payload
+    assert "description" in payload
+    assert "capabilities" in payload
+    assert isinstance(payload["capabilities"], list)
+    assert "workspace" in payload
 
 
 @patch("openclaw_instagram.utils.iamq.httpx.post")
