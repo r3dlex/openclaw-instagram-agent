@@ -29,6 +29,7 @@ logger = structlog.get_logger()
 SESSION_CACHE_DIR = Path("session_cache")
 SESSION_FILE = SESSION_CACHE_DIR / "session.json"
 API_FAILURE_FILE = SESSION_CACHE_DIR / "api_failure_timestamp"
+LIKED_CACHE_FILE = SESSION_CACHE_DIR / "liked_posts.json"
 
 
 class InstagramAPIClient:
@@ -37,14 +38,12 @@ class InstagramAPIClient:
     def __init__(
         self,
         settings: Settings,
-        telegram_notifier: Any | None = None,
         iamq_client: Any | None = None,
     ) -> None:
         self.settings = settings
         self.rate_limiter = RateLimiter(max_per_hour=settings.max_actions_per_hour)
         self._client: InstaClient | None = None
         self._api_available = True
-        self._telegram = telegram_notifier
         self._iamq = iamq_client
 
     @property
@@ -73,8 +72,6 @@ class InstagramAPIClient:
             "api_marked_failed",
             retry_after_hours=self.settings.api_retry_hours,
         )
-        if self._telegram:
-            self._telegram.notify_api_cooldown(self.settings.api_retry_hours)
         if self._iamq:
             self._iamq.announce_api_cooldown(self.settings.api_retry_hours)
 
@@ -124,10 +121,17 @@ class InstagramAPIClient:
             try:
                 session_data = json.loads(SESSION_FILE.read_text())
                 client.set_settings(session_data)
-                self._login_with_2fa(client)
+                # Verify session is still valid with stored cookies
+                client.login(
+                    self.settings.instagram_username,
+                    self.settings.instagram_password,
+                )
                 logger.info("session_restored")
                 self._client = client
                 return client
+            except TwoFactorRequired:
+                logger.warning("session_expired_2fa_required")
+                SESSION_FILE.unlink(missing_ok=True)
             except Exception:
                 logger.warning("session_restore_failed_relogin")
                 SESSION_FILE.unlink(missing_ok=True)
@@ -220,6 +224,18 @@ class InstagramAPIClient:
         """Get current stories for a user."""
         result = self._safe_call("user_stories", user_id)
         return result or []
+
+    def get_liked_posts(self) -> set[str]:
+        """Load set of already-liked post PKs from cache."""
+        if LIKED_CACHE_FILE.exists():
+            return set(json.loads(LIKED_CACHE_FILE.read_text()))
+        return set()
+
+    def mark_liked(self, media_pk: str) -> None:
+        """Record a post as liked in the cache."""
+        liked = self.get_liked_posts()
+        liked.add(str(media_pk))
+        LIKED_CACHE_FILE.write_text(json.dumps(sorted(liked)))
 
     def close(self) -> None:
         """Save session and clean up."""

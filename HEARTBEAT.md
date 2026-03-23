@@ -23,7 +23,7 @@ curl -s "http://127.0.0.1:18790/inbox/instagram_agent?status=unread"
 For each message:
 1. Mark as read: `PATCH http://127.0.0.1:18790/messages/:id {"status": "read"}`
 2. Process the request (if `type: "request"`)
-3. Reply via MQ (not Telegram) for agent-to-agent responses:
+3. Reply via MQ for agent-to-agent responses:
    ```bash
    curl -X POST http://127.0.0.1:18790/send \
      -H "Content-Type: application/json" \
@@ -38,7 +38,7 @@ For each message:
    ```
 4. Mark as acted: `PATCH http://127.0.0.1:18790/messages/:id {"status": "acted"}`
 
-**Important:** Reply through the MQ for agent-to-agent communication. Telegram is for human-facing output only.
+**Important:** Reply through the MQ for agent-to-agent communication.
 
 ## 3. Engagement Cycle (if due)
 
@@ -48,7 +48,7 @@ Run the engagement cycle on List A accounts if sufficient time has passed since 
 openclaw-instagram engage --list a
 ```
 
-Results are automatically broadcast to all peer agents via IAMQ and to Telegram.
+Results are automatically broadcast to all peer agents via IAMQ.
 
 ## 4. Check DMs (if due)
 
@@ -56,4 +56,4 @@ Results are automatically broadcast to all peer agents via IAMQ and to Telegram.
 openclaw-instagram dms --list a
 ```
 
-New DMs are reported via IAMQ broadcast and Telegram notification.
+New DMs are reported via IAMQ broadcast.

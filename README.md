@@ -12,7 +12,6 @@ An autonomous Instagram engagement agent powered by [OpenClaw](https://docs.open
 - **Zero-install** — Run via Docker or Poetry, no manual dependency setup
 - **Autonomous but safe** — Likes and monitors autonomously; all text replies require human approval
 - **Pipeline-assured quality** — Python CI pipelines enforce architecture decisions (ADRs)
-- **Telegram notifications** — Real-time alerts for engagement cycles, errors, and DMs
 - **Inter-agent messaging** — Discovers and communicates with peer agents via [IAMQ](https://github.com/r3dlex/openclaw-inter-agent-message-queue)
 - **Structured logging** — Console + JSON file output to `logs/`
 - **OpenClaw native** — Integrates with heartbeats, memory, and multi-channel messaging
@@ -84,8 +83,6 @@ All configuration via environment variables. See [.env.example](.env.example) fo
 | `MIN_ACTION_DELAY_SECONDS` | 10 | Minimum delay between actions |
 | `MAX_ACTION_DELAY_SECONDS` | 30 | Maximum delay between actions |
 | `API_RETRY_HOURS` | 24 | Hours to wait before retrying API |
-| `TELEGRAM_BOT_TOKEN` | — | Telegram Bot token (optional) |
-| `TELEGRAM_CHAT_ID` | — | Telegram chat for notifications (optional) |
 | `LOG_LEVEL` | INFO | Logging level |
 | `LOG_DIR` | ./logs | JSON log file directory |
 | `IAMQ_ENABLED` | false | Enable inter-agent message queue |

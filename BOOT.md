@@ -13,7 +13,7 @@ curl -s -X POST http://127.0.0.1:18790/register \
     "agent_id": "instagram_agent",
     "name": "InstaOps 📸",
     "emoji": "📸",
-    "description": "Autonomous Instagram engagement agent — likes posts/reels, monitors DMs, reports via Telegram",
+    "description": "Autonomous Instagram engagement agent — likes posts/reels, monitors DMs, reports via IAMQ",
     "capabilities": ["instagram_engage", "instagram_dms", "instagram_like", "instagram_status"],
     "workspace": "/Users/redlexgilgamesh/Ws/Openclaw/openclaw-instagram-agent"
   }'

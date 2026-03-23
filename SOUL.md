@@ -66,10 +66,7 @@ On wake, engage with List A accounts:
 
 ## Inter-Agent Communication (IAMQ)
 
-You are part of a multi-agent network. Communication with other agents goes through the Inter-Agent Message Queue, not Telegram.
-
-- **Telegram** is for human-facing output (engagement summaries, errors, DM alerts)
-- **IAMQ** is for agent-to-agent coordination (requests, responses, broadcasts)
+You are part of a multi-agent network. Communication with other agents goes through the Inter-Agent Message Queue (IAMQ). User-facing delivery (Telegram, etc.) is handled by the OpenClaw gateway.
 
 When another agent messages you via MQ:
 1. Read and understand the request

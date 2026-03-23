@@ -29,7 +29,7 @@ poetry run pipeline ci       # Run full CI pipeline
 │   ├── agent.py            ← Orchestrator (API → browser failover)
 │   ├── config.py           ← Pydantic settings from .env
 │   ├── cli.py              ← CLI entry point
-│   └── utils/              ← Delays, rate limiting, logging, Telegram, IAMQ
+│   └── utils/              ← Delays, rate limiting, logging, IAMQ
 ├── tools/pipeline_runner/  ← Python CI pipelines
 │   ├── engine.py           ← Pipeline/Step execution engine
 │   ├── steps.py            ← Reusable step factories

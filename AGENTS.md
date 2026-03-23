@@ -82,11 +82,7 @@ Or use `./scripts/run.sh` for zero-install execution.
 
 ## Notifications
 
-If Telegram is configured (see `CONFIG.md`), you automatically send notifications for:
-- Engagement summaries after each cycle
-- API cooldown events
-- New DMs requiring attention
-- Critical errors
+Engagement summaries, errors, and DM alerts are broadcast via IAMQ. User-facing delivery (Telegram, etc.) is handled by the OpenClaw gateway.
 
 All logs are also written to `logs/agent-YYYY-MM-DD.log` in JSON format for debugging.
 

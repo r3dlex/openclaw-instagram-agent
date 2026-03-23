@@ -14,7 +14,6 @@ from openclaw_instagram.config import Settings, get_settings
 from openclaw_instagram.utils.human_delay import sleep_human
 from openclaw_instagram.utils.iamq import IAMQClient
 from openclaw_instagram.utils.logging import setup_logging
-from openclaw_instagram.utils.telegram import TelegramNotifier
 
 logger = structlog.get_logger()
 
@@ -31,10 +30,6 @@ class InstagramAgent:
     def __init__(self, settings: Settings | None = None) -> None:
         self.settings = settings or get_settings()
         setup_logging(self.settings.log_level, self.settings.log_dir)
-        self.telegram = TelegramNotifier(
-            bot_token=self.settings.telegram_bot_token,
-            chat_id=self.settings.telegram_chat_id,
-        )
         self.iamq = IAMQClient(
             base_url=self.settings.iamq_http_url,
             agent_id=self.settings.iamq_agent_id,
@@ -46,7 +41,7 @@ class InstagramAgent:
                 "emoji": "\U0001f4f8",
                 "description": (
                     "Autonomous Instagram engagement agent "
-                    "\u2014 likes posts/reels, monitors DMs, reports via Telegram"
+                    "\u2014 likes posts/reels, monitors DMs, reports via IAMQ"
                 ),
                 "capabilities": [
                     "instagram_engage",
@@ -58,7 +53,7 @@ class InstagramAgent:
             },
         )
         self.api = InstagramAPIClient(
-            self.settings, telegram_notifier=self.telegram, iamq_client=self.iamq
+            self.settings, iamq_client=self.iamq
         )
         self.browser = BrowserFallback(self.settings)
         self.iamq.start()
@@ -81,25 +76,35 @@ class InstagramAgent:
                 self.settings.max_action_delay_seconds,
             )
 
-        self.telegram.notify_engagement_done(results)
         self.iamq.announce_engagement(results)
         return results
 
     def _engage_via_api(self, username: str) -> dict[str, Any]:
         """Engage with a single account via API."""
-        result: dict[str, Any] = {"method": "api", "liked": 0, "errors": []}
+        result: dict[str, Any] = {"method": "api", "liked": 0, "skipped": 0, "posts": [], "errors": []}
 
         user_id = self.api.get_user_id(username)
         if not user_id:
             result["errors"].append(f"Could not resolve user: {username}")
             return result
 
-        medias = self.api.get_user_medias(user_id, count=5)
+        liked_cache = self.api.get_liked_posts()
+        medias = self.api.get_user_medias(user_id, count=10)
         for media in medias:
+            pk = str(media.pk)
+            if pk in liked_cache:
+                result["skipped"] += 1
+                continue
             if self.api.like_media(media.id):
+                self.api.mark_liked(pk)
                 result["liked"] += 1
+                # Build description
+                media_type = {1: "Photo", 2: "Video/Reel", 8: "Album"}.get(media.media_type, "Post")
+                caption = getattr(media, "caption_text", "") or ""
+                summary = f"{media_type}: {caption[:100]}" if caption else media_type
+                result["posts"].append({"pk": pk, "type": media_type, "summary": summary})
 
-        logger.info("api_engagement_done", username=username, liked=result["liked"])
+        logger.info("api_engagement_done", username=username, liked=result["liked"], skipped=result["skipped"])
         return result
 
     async def _engage_via_browser(self, username: str) -> dict[str, Any]:
@@ -112,7 +117,6 @@ class InstagramAgent:
         except Exception as e:
             result["errors"].append(str(e))
             logger.error("browser_engagement_error", username=username, error=str(e))
-            self.telegram.notify_error("browser_engagement", str(e))
             self.iamq.announce_error("browser_engagement", str(e))
 
         logger.info("browser_engagement_done", username=username, liked=result["liked"])
@@ -136,8 +140,6 @@ class InstagramAgent:
         else:
             messages = asyncio.run(self._check_dms_browser(filter_usernames))
 
-        if messages:
-            self.telegram.notify_dms(messages)
         return messages
 
     async def _check_dms_browser(
