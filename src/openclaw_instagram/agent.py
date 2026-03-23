@@ -81,7 +81,10 @@ class InstagramAgent:
 
     def _engage_via_api(self, username: str) -> dict[str, Any]:
         """Engage with a single account via API."""
-        result: dict[str, Any] = {"method": "api", "liked": 0, "skipped": 0, "posts": [], "errors": []}
+        result: dict[str, Any] = {
+            "method": "api", "liked": 0, "skipped": 0,
+            "posts": [], "errors": [],
+        }
 
         user_id = self.api.get_user_id(username)
         if not user_id:
@@ -104,7 +107,11 @@ class InstagramAgent:
                 summary = f"{media_type}: {caption[:100]}" if caption else media_type
                 result["posts"].append({"pk": pk, "type": media_type, "summary": summary})
 
-        logger.info("api_engagement_done", username=username, liked=result["liked"], skipped=result["skipped"])
+        logger.info(
+            "api_engagement_done",
+            username=username, liked=result["liked"],
+            skipped=result["skipped"],
+        )
         return result
 
     async def _engage_via_browser(self, username: str) -> dict[str, Any]:
