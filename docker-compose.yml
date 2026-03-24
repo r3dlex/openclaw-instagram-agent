@@ -44,5 +44,7 @@ services:
       IAMQ_AGENT_EMOJI: "\U0001F4F8"
       IAMQ_AGENT_DESC: "Instagram engagement automation. Likes posts/reels, monitors DMs, reports through messaging channels."
       IAMQ_AGENT_CAPABILITIES: instagram_engagement,post_liking,reel_liking,dm_monitoring,account_monitoring,engagement_reporting,api_fallback,browser_automation,rate_limiting
+      IAMQ_HEARTBEAT_MS: "300000"
+      IAMQ_POLL_MS: "60000"
     extra_hosts:
       - "host.docker.internal:host-gateway"

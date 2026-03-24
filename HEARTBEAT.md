@@ -58,11 +58,10 @@ openclaw-instagram dms --list a
 
 New DMs are reported via IAMQ broadcast.
 
-## 5. Report to User
+## Report to User
 
-After completing all checks above, **send a summary to the user via your messaging channel** (Telegram through OpenClaw gateway). The user cannot see IAMQ messages.
-
-- If you ran engagement, found DMs, or processed MQ requests: summarize what happened.
-  Example: "Heartbeat: liked 8 posts across 4 accounts. 1 new DM from @account (flagged for review)."
-- If nothing happened: "All quiet — no new DMs, engagement on schedule."
-- Errors and warnings (rate limits, API failures): report IMMEDIATELY, don't wait for the heartbeat summary.
+Send a Telegram summary ONLY when there's something worth reporting:
+- Engagement runs completed, new DMs found, MQ requests processed.
+  Example: "Liked 8 posts across 4 accounts. 1 new DM from @account."
+- Rate limits, API failures, account issues: report IMMEDIATELY.
+- Do NOT send a message if nothing happened. Silent heartbeats are fine.
