@@ -49,6 +49,7 @@ select = ["E", "F", "I", "N", "W", "UP", "B", "SIM"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 asyncio_mode = "auto"
+addopts = "--cov=openclaw_instagram --cov-report=term-missing --cov-fail-under=40"
 
 [tool.mypy]
 python_version = "3.11"
