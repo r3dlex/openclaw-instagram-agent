@@ -24,6 +24,9 @@ RUN playwright install chromium
 
 # Copy source
 COPY src/ src/
+COPY tools/ tools/
+COPY README.md ./
+COPY LICENSE ./
 RUN poetry install --no-interaction --only-root
 
 # Runtime
