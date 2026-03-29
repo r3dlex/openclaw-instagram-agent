@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="assets/logo.svg" alt="Instagram Agent logo" width="96" height="96">
+</p>
+
 # OpenClaw Instagram Agent
 
 [![CI](https://github.com/r3dlex/openclaw-instagram-agent/actions/workflows/ci.yml/badge.svg)](https://github.com/r3dlex/openclaw-instagram-agent/actions/workflows/ci.yml)

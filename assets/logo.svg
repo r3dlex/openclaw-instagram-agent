@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <!-- Outer rounded square (camera body) -->
+  <rect x="16" y="16" width="96" height="96" rx="24" ry="24" fill="none" stroke="#E1306C" stroke-width="8"/>
+  <!-- Inner circle (lens) -->
+  <circle cx="64" cy="64" r="24" fill="none" stroke="#E1306C" stroke-width="7"/>
+  <!-- Flash dot (top right) -->
+  <circle cx="90" cy="38" r="6" fill="#E1306C"/>
+</svg>
