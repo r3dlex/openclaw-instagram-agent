@@ -141,9 +141,11 @@ class InstagramAgent:
 
         # stuttgart_blog — German
         if username == "stuttgart_blog":
-            if any(w in caption_lower for w in ["stuttgart", "west", "stadt", "platz", "restaurant", "cafe", "bar", "food", "essen"]):
+            stuttgart_words = ["stuttgart", "west", "stadt", "platz", "restaurant", "cafe", "bar", "food", "essen"]
+            if any(w in caption_lower for w in stuttgart_words):
                 return "Toller Tipp! Stuttgart West hat so viel zu bieten 👏"
-            if any(w in caption_lower for w in ["magnolien", "wilhelma", "blumen", "park", "garten", "natur"]):
+            nature_words = ["magnolien", "wilhelma", "blumen", "park", "garten", "natur"]
+            if any(w in caption_lower for w in nature_words):
                 return "Die Magnolien in der Wilhelma sind unglaublich schön! Danke für den Tipp 🌸"
             if any(w in caption_lower for w in ["stuttgart 21", "bau", "baustelle", "tunnel", "zug", "bahn"]):
                 return "Faszinierend! So ein exklusiver Blick hinter die Kulissen von Stuttgart 21 🚧"
