@@ -141,29 +141,46 @@ class InstagramAgent:
 
         # stuttgart_blog — German
         if username == "stuttgart_blog":
-            stuttgart_words = ["stuttgart", "west", "stadt", "platz", "restaurant", "cafe", "bar", "food", "essen"]
-            if any(w in caption_lower for w in stuttgart_words):
+            city_words = [
+                "stuttgart", "west", "stadt", "platz", "restaurant",
+                "cafe", "bar", "food", "essen",
+            ]
+            if any(w in caption_lower for w in city_words):
                 return "Toller Tipp! Stuttgart West hat so viel zu bieten 👏"
             nature_words = ["magnolien", "wilhelma", "blumen", "park", "garten", "natur"]
             if any(w in caption_lower for w in nature_words):
                 return "Die Magnolien in der Wilhelma sind unglaublich schön! Danke für den Tipp 🌸"
-            if any(w in caption_lower for w in ["stuttgart 21", "bau", "baustelle", "tunnel", "zug", "bahn"]):
-                return "Faszinierend! So ein exklusiver Blick hinter die Kulissen von Stuttgart 21 🚧"
-            if any(w in caption_lower for w in ["business", "linkedin", "foto", "portrait", "porträt"]):
-                return "Du siehst großartig auf den neuen Fotos! So mutig, sich vor die Linse zu trauen 📸"
-            if any(w in caption_lower for w in ["terrasse", "sonne", "sonnenterrasse", "aussicht", "genieß"]):
+            construction_words = ["stuttgart 21", "bau", "baustelle", "tunnel", "zug", "bahn"]
+            if any(w in caption_lower for w in construction_words):
+                return (
+                    "Faszinierend! So ein exklusiver Blick hinter die Kulissen von Stuttgart 21 🚧"
+                )
+            business_words = ["business", "linkedin", "foto", "portrait", "porträt"]
+            if any(w in caption_lower for w in business_words):
+                return (
+                    "Du siehst großartig auf den neuen Fotos! "
+                    "So mutig, sich vor die Linse zu trauen 📸"
+                )
+            terrace_words = ["terrasse", "sonne", "sonnenterrasse", "aussicht", "genieß"]
+            if any(w in caption_lower for w in terrace_words):
                 return "Diese Terrasse muss ich dieses Jahr unbedingt besuchen! 😎☀️"
             if any(w in caption_lower for w in ["indoor", "spielplatz", "kinder", "spaß"]):
                 return "Toller Spot! Spielen und Genießen mitten in Stuttgart 🎉"
-            if any(w in caption_lower for w in ["artbeat", "malen", "kreativ", "aktion", "painting"]):
+            artbeat_words = ["artbeat", "malen", "kreativ", "aktion", "painting"]
+            if any(w in caption_lower for w in artbeat_words):
                 return "So eine coole Idee! Kreativ sein in Stuttgart 👀✨"
             if any(w in caption_lower for w in [" Mauritius", "beach", "urlaub", "urlaubsgefühl"]):
-                return "Das Mauritius Beach kenne ich noch gar nicht! Urlaubsfeeling mitten in der Stadt, wow! ☀️🏖️"
+                return (
+                    "Das Mauritius Beach kenne ich noch gar nicht! "
+                    "Urlaubsfeeling mitten in der Stadt, wow! ☀️🏖️"
+                )
             if any(w in caption_lower for w in ["perlen", "schmuck", "studio", "gestalten"]):
                 return "So eine tolle Idee! Schmuck selber machen in Stuttgart 👀✨"
-            if any(w in caption_lower for w in ["pizza", "pasta", "restaurant", "italienisch", "food"]):
+            food_words = ["pizza", "pasta", "restaurant", "italienisch", "food"]
+            if any(w in caption_lower for w in food_words):
                 return "Pizza oder Pasta? Warum entscheiden... wenn man beides haben kann? 🍕🍝"
-            if any(w in caption_lower for w in ["workshop", "frauenpower", "konzept", " empowerment"]):
+            empower_words = ["workshop", "frauenpower", "konzept", " empowerment"]
+            if any(w in caption_lower for w in empower_words):
                 return "Starke Frauenpower in Stuttgart! 🚀💪"
             if any(w in caption_lower for w in ["abnehmen", "fitness", "gesund", "wellness"]):
                 return "Siehst super aus! Motivation pur 💪✨"
@@ -178,14 +195,21 @@ class InstagramAgent:
             if any(w in caption_lower for w in ["mauritius", "my_mauritius", "spiel", "spaß"]):
                 return "Mauri Games klingt nach perfektem Spaß für Nicky! 😄🎮"
             if any(w in caption_lower for w in ["indoor", "spielplatz", "innenstadt"]):
-                return "Ein neuer Indoor-Spielplatz in der Innenstadt? Nicky war wohl sofort Fan! 👀🎢"
-            if any(w in caption_lower for w in ["buildabearde", "laden", "kuscheltier", "teddy"]):
-                return "Build-a-Beard klingt nach einem Abenteuer! Nickys Kuscheltier ist so cute ✂️🐻"
+                return (
+                    "Ein neuer Indoor-Spielplatz in der Innenstadt? Nicky war wohl sofort Fan! 👀🎢"
+                )
+            build_words = ["buildabearde", "laden", "kuscheltier", "teddy"]
+            if any(w in caption_lower for w in build_words):
+                return (
+                    "Build-a-Beard klingt nach einem Abenteuer! "
+                    "Nickys Kuscheltier ist so cute ✂️🐻"
+                )
             if any(w in caption_lower for w in ["spielzeug", "testen", "monat"]):
                 return "Monatliches Spielzeug zum Testen? Nicky hat bestimmt Spaß dabei! 🎁🧸"
             if any(w in caption_lower for w in [" crêpes", "workshop", "kochen", "backen"]):
                 return "Nicky hat ja selbst Crêpes gemacht! 🥞 So cool!"
-            if any(w in caption_lower for w in ["weihnachtsmarkt", "weihnachten", "weihnacht", "glühwein"]):
+            xmas_words = ["weihnachtsmarkt", "weihnachten", "weihnacht", "glühwein"]
+            if any(w in caption_lower for w in xmas_words):
                 return "Der Weihnachtsmarkt-Zauber bleibt immer! Staunende Augen 👀🎄"
             if any(w in caption_lower for w in ["kinder", "perspektive", "nicky", "entdeckt"]):
                 return "Nicky als Reporter 🧒📣 Die Perspektive von Kindern ist so wertvoll!"
@@ -197,16 +221,28 @@ class InstagramAgent:
 
         # ankes_insta — mixed DE/EN
         elif username == "ankes_insta":
-            if any(w in caption_lower for w in ["love", "liebe", "relationship", "paar", "couple"]):
-                return "Wunderschöne Liebesgeschichte! ❤️ So schön, dass ihr sie bei @ichhier_dudort teilt!"
+            love_words = ["love", "liebe", "relationship", "paar", "couple"]
+            if any(w in caption_lower for w in love_words):
+                return (
+                    "Wunderschöne Liebesgeschichte! ❤️ "
+                    "So schön, dass ihr sie bei @ichhier_dudort teilt!"
+                )
             if any(w in caption_lower for w in ["floriano", "baby", "newborn", "bruder"]):
-                return "One year with Floriano already! 🥳 Wishing you all the love in the world! 💕"
-            if any(w in caption_lower for w in ["greece", "griechenland", "sommer", "sonne", "urlaub"]):
+                return (
+                    "One year with Floriano already! 🥳 "
+                    "Wishing you all the love in the world! 💕"
+                )
+            greece_words = ["greece", "griechenland", "sommer", "sonne", "urlaub"]
+            if any(w in caption_lower for w in greece_words):
                 return "Greece looks absolutely beautiful! 🇬🇷☀️ Love the vibes!"
             if any(w in caption_lower for w in ["turkey", "türkei", "extended summer"]):
                 return "Extended summer in Turkey sounds like paradise! 🇹🇷☀️🌸"
-            if any(w in caption_lower for w in ["colorfully", "languages", "greeting", "introduce"]):
-                return "What a wonderful contribution to OursColorfully Languages! Greetings from Stuttgart 🇩🇪✨"
+            lang_words = ["colorfully", "languages", "greeting", "introduce"]
+            if any(w in caption_lower for w in lang_words):
+                return (
+                    "What a wonderful contribution to OursColorfully Languages! "
+                    "Greetings from Stuttgart 🇩🇪✨"
+                )
             if any(w in caption_lower for w in ["podcast", "where are they now", "archival"]):
                 return "Love this 'where are they now' update! 📻✨ Always so heartwarming!"
             if any(w in caption_lower for w in ["floriano"]):
