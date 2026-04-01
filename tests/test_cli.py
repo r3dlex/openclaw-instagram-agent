@@ -49,8 +49,14 @@ def test_engage_command_list_a(mock_agent_cls, mock_get_settings, capsys):
 
     agent = _make_agent_mock(settings)
     agent.engage_accounts.return_value = {
-        "user1": {"method": "api", "liked": 2, "commented": 0, "skipped": 0, "posts": [], "errors": []},
-        "user2": {"method": "api", "liked": 1, "commented": 0, "skipped": 0, "posts": [], "errors": []},
+        "user1": {
+            "method": "api", "liked": 2, "commented": 0,
+            "skipped": 0, "posts": [], "errors": [],
+        },
+        "user2": {
+            "method": "api", "liked": 1, "commented": 0,
+            "skipped": 0, "posts": [], "errors": [],
+        },
     }
     mock_agent_cls.return_value = agent
 
@@ -90,9 +96,11 @@ def test_engage_command_empty_accounts_exits(mock_agent_cls, mock_get_settings):
     agent = _make_agent_mock(settings)
     mock_agent_cls.return_value = agent
 
-    with patch.object(sys, "argv", ["cli", "engage", "--list", "a"]):
-        with pytest.raises(SystemExit) as exc_info:
-            main()
+    with (
+        patch.object(sys, "argv", ["cli", "engage", "--list", "a"]),
+        pytest.raises(SystemExit) as exc_info,
+    ):
+        main()
     assert exc_info.value.code == 1
 
 
@@ -167,9 +175,11 @@ def test_agents_command_when_iamq_disabled_exits(mock_agent_cls, mock_get_settin
     agent.iamq.enabled = False
     mock_agent_cls.return_value = agent
 
-    with patch.object(sys, "argv", ["cli", "agents"]):
-        with pytest.raises(SystemExit) as exc_info:
-            main()
+    with (
+        patch.object(sys, "argv", ["cli", "agents"]),
+        pytest.raises(SystemExit) as exc_info,
+    ):
+        main()
     assert exc_info.value.code == 1
 
 
@@ -204,9 +214,11 @@ def test_inbox_command_when_iamq_disabled_exits(mock_agent_cls, mock_get_setting
     agent.iamq.enabled = False
     mock_agent_cls.return_value = agent
 
-    with patch.object(sys, "argv", ["cli", "inbox"]):
-        with pytest.raises(SystemExit) as exc_info:
-            main()
+    with (
+        patch.object(sys, "argv", ["cli", "inbox"]),
+        pytest.raises(SystemExit) as exc_info,
+    ):
+        main()
     assert exc_info.value.code == 1
 
 
@@ -238,9 +250,11 @@ def test_no_command_exits(mock_agent_cls, mock_get_settings):
     mock_get_settings.return_value = settings
     mock_agent_cls.return_value = _make_agent_mock(settings)
 
-    with patch.object(sys, "argv", ["cli"]):
-        with pytest.raises(SystemExit) as exc_info:
-            main()
+    with (
+        patch.object(sys, "argv", ["cli"]),
+        pytest.raises(SystemExit) as exc_info,
+    ):
+        main()
     assert exc_info.value.code == 1
 
 
@@ -255,9 +269,11 @@ def test_close_called_on_exception(mock_agent_cls, mock_get_settings):
     agent.engage_accounts.side_effect = RuntimeError("boom")
     mock_agent_cls.return_value = agent
 
-    with patch.object(sys, "argv", ["cli", "engage", "--list", "a"]):
-        with pytest.raises(RuntimeError):
-            main()
+    with (
+        patch.object(sys, "argv", ["cli", "engage", "--list", "a"]),
+        pytest.raises(RuntimeError),
+    ):
+        main()
 
     agent.close.assert_called_once()
 

@@ -4,10 +4,8 @@ from __future__ import annotations
 
 import json
 import time
-from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-import pytest
 from instagrapi.exceptions import (
     ChallengeRequired,
     LoginRequired,
@@ -210,7 +208,7 @@ def test_get_client_session_restore_2fa_required(mock_cls, tmp_path):
         patch("openclaw_instagram.api.client.sleep_human", return_value=0.0),
     ):
         api = InstagramAPIClient(_make_settings())
-        client = api._get_client()
+        api._get_client()
 
     # Fresh login happened
     assert mock_client.login.call_count == 2

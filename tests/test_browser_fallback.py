@@ -232,11 +232,11 @@ async def test_like_latest_posts_success(settings):
 
     mock_page.locator = MagicMock(side_effect=locator_side_effect)
 
-    with patch(
-        "openclaw_instagram.browser.fallback.async_sleep_human", new_callable=AsyncMock
+    with (
+        patch("openclaw_instagram.browser.fallback.async_sleep_human", new_callable=AsyncMock),
+        patch.object(fb, "navigate_to_profile", new_callable=AsyncMock, return_value=mock_page),
     ):
-        with patch.object(fb, "navigate_to_profile", new_callable=AsyncMock, return_value=mock_page):
-            liked = await fb.like_latest_posts("testuser", count=2)
+        liked = await fb.like_latest_posts("testuser", count=2)
 
     assert liked >= 0  # Should have liked some posts
 
@@ -269,11 +269,11 @@ async def test_like_latest_posts_no_like_button(settings):
 
     mock_page.locator = MagicMock(side_effect=locator_side_effect)
 
-    with patch(
-        "openclaw_instagram.browser.fallback.async_sleep_human", new_callable=AsyncMock
+    with (
+        patch("openclaw_instagram.browser.fallback.async_sleep_human", new_callable=AsyncMock),
+        patch.object(fb, "navigate_to_profile", new_callable=AsyncMock, return_value=mock_page),
     ):
-        with patch.object(fb, "navigate_to_profile", new_callable=AsyncMock, return_value=mock_page):
-            liked = await fb.like_latest_posts("testuser", count=2)
+        liked = await fb.like_latest_posts("testuser", count=2)
 
     assert liked == 0
 
@@ -288,11 +288,11 @@ async def test_like_latest_posts_no_posts(settings):
     post_locator.count = AsyncMock(return_value=0)
     mock_page.locator = MagicMock(return_value=post_locator)
 
-    with patch(
-        "openclaw_instagram.browser.fallback.async_sleep_human", new_callable=AsyncMock
+    with (
+        patch("openclaw_instagram.browser.fallback.async_sleep_human", new_callable=AsyncMock),
+        patch.object(fb, "navigate_to_profile", new_callable=AsyncMock, return_value=mock_page),
     ):
-        with patch.object(fb, "navigate_to_profile", new_callable=AsyncMock, return_value=mock_page):
-            liked = await fb.like_latest_posts("testuser", count=3)
+        liked = await fb.like_latest_posts("testuser", count=3)
 
     assert liked == 0
 
@@ -310,11 +310,11 @@ async def test_like_latest_posts_exception_handling(settings):
     post_locator.nth = MagicMock(return_value=post_item)
     mock_page.locator = MagicMock(return_value=post_locator)
 
-    with patch(
-        "openclaw_instagram.browser.fallback.async_sleep_human", new_callable=AsyncMock
+    with (
+        patch("openclaw_instagram.browser.fallback.async_sleep_human", new_callable=AsyncMock),
+        patch.object(fb, "navigate_to_profile", new_callable=AsyncMock, return_value=mock_page),
     ):
-        with patch.object(fb, "navigate_to_profile", new_callable=AsyncMock, return_value=mock_page):
-            liked = await fb.like_latest_posts("testuser", count=1)
+        liked = await fb.like_latest_posts("testuser", count=1)
 
     assert liked == 0
     mock_page.keyboard.press.assert_called_with("Escape")

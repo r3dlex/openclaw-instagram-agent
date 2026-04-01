@@ -2,9 +2,7 @@
 
 from __future__ import annotations
 
-from unittest.mock import AsyncMock, MagicMock, patch
-
-import pytest
+from unittest.mock import MagicMock, patch
 
 from openclaw_instagram.agent import InstagramAgent
 from openclaw_instagram.config import Settings
@@ -227,20 +225,21 @@ def test_generate_comment_stuttgart_blog_various(mock_browser_cls, mock_api_cls,
     agent = InstagramAgent(settings)
 
     # Test various trigger words
-    assert agent._generate_comment("stuttgart_blog", "magnolien in der wilhelma", "Video/Reel") is not None
-    assert agent._generate_comment("stuttgart_blog", "stuttgart 21 tunnel", "Video/Reel") is not None
-    assert agent._generate_comment("stuttgart_blog", "business portrait foto", "Video/Reel") is not None
-    assert agent._generate_comment("stuttgart_blog", "terrasse sonnenterrasse", "Video/Reel") is not None
-    assert agent._generate_comment("stuttgart_blog", "indoor spielplatz kinder", "Video/Reel") is not None
-    assert agent._generate_comment("stuttgart_blog", "artbeat malen kreativ", "Video/Reel") is not None
-    assert agent._generate_comment("stuttgart_blog", "Mauritius beach urlaub", "Video/Reel") is not None
-    assert agent._generate_comment("stuttgart_blog", "perlen schmuck studio", "Video/Reel") is not None
-    assert agent._generate_comment("stuttgart_blog", "pizza pasta restaurant", "Video/Reel") is not None
-    assert agent._generate_comment("stuttgart_blog", "workshop frauenpower", "Video/Reel") is not None
-    assert agent._generate_comment("stuttgart_blog", "abnehmen fitness gesund", "Video/Reel") is not None
-    assert agent._generate_comment("stuttgart_blog", "gewinnspiel geschenk", "Video/Reel") is not None
+    gc = agent._generate_comment
+    assert gc("stuttgart_blog", "magnolien in der wilhelma", "Video/Reel") is not None
+    assert gc("stuttgart_blog", "stuttgart 21 tunnel", "Video/Reel") is not None
+    assert gc("stuttgart_blog", "business portrait foto", "Video/Reel") is not None
+    assert gc("stuttgart_blog", "terrasse sonnenterrasse", "Video/Reel") is not None
+    assert gc("stuttgart_blog", "indoor spielplatz kinder", "Video/Reel") is not None
+    assert gc("stuttgart_blog", "artbeat malen kreativ", "Video/Reel") is not None
+    assert gc("stuttgart_blog", "Mauritius beach urlaub", "Video/Reel") is not None
+    assert gc("stuttgart_blog", "perlen schmuck studio", "Video/Reel") is not None
+    assert gc("stuttgart_blog", "pizza pasta restaurant", "Video/Reel") is not None
+    assert gc("stuttgart_blog", "workshop frauenpower", "Video/Reel") is not None
+    assert gc("stuttgart_blog", "abnehmen fitness gesund", "Video/Reel") is not None
+    assert gc("stuttgart_blog", "gewinnspiel geschenk", "Video/Reel") is not None
     # Default comment
-    default = agent._generate_comment("stuttgart_blog", "something random unrelated", "Video/Reel")
+    default = gc("stuttgart_blog", "something random unrelated", "Video/Reel")
     assert default == "Super Beitrag! 👏"
 
 
@@ -254,18 +253,19 @@ def test_generate_comment_stuttgartmitkind_various(mock_browser_cls, mock_api_cl
     mock_api_cls.return_value = mock_api
     agent = InstagramAgent(settings)
 
-    assert agent._generate_comment("stuttgartmitkind", "artbeat malen kreativ gemalt", "Video/Reel") is not None
-    assert agent._generate_comment("stuttgartmitkind", "mauritius spiel spaß", "Video/Reel") is not None
-    assert agent._generate_comment("stuttgartmitkind", "indoor spielplatz innenstadt", "Video/Reel") is not None
-    assert agent._generate_comment("stuttgartmitkind", "buildabearde kuscheltier teddy", "Video/Reel") is not None
-    assert agent._generate_comment("stuttgartmitkind", "spielzeug testen monat", "Video/Reel") is not None
-    assert agent._generate_comment("stuttgartmitkind", " crêpes workshop kochen", "Video/Reel") is not None
-    assert agent._generate_comment("stuttgartmitkind", "weihnachtsmarkt glühwein", "Video/Reel") is not None
-    assert agent._generate_comment("stuttgartmitkind", "kinder perspektive nicky entdeckt", "Video/Reel") is not None
-    assert agent._generate_comment("stuttgartmitkind", " Indoor hüpfburg ritts", "Video/Reel") is not None
-    assert agent._generate_comment("stuttgartmitkind", "werbung anzeige", "Video/Reel") is not None
+    gc = agent._generate_comment
+    assert gc("stuttgartmitkind", "artbeat malen kreativ gemalt", "Video/Reel") is not None
+    assert gc("stuttgartmitkind", "mauritius spiel spaß", "Video/Reel") is not None
+    assert gc("stuttgartmitkind", "indoor spielplatz innenstadt", "Video/Reel") is not None
+    assert gc("stuttgartmitkind", "buildabearde kuscheltier teddy", "Video/Reel") is not None
+    assert gc("stuttgartmitkind", "spielzeug testen monat", "Video/Reel") is not None
+    assert gc("stuttgartmitkind", " crêpes workshop kochen", "Video/Reel") is not None
+    assert gc("stuttgartmitkind", "weihnachtsmarkt glühwein", "Video/Reel") is not None
+    assert gc("stuttgartmitkind", "kinder perspektive nicky entdeckt", "Video/Reel") is not None
+    assert gc("stuttgartmitkind", " Indoor hüpfburg ritts", "Video/Reel") is not None
+    assert gc("stuttgartmitkind", "werbung anzeige", "Video/Reel") is not None
     # Default
-    default = agent._generate_comment("stuttgartmitkind", "something else", "Video/Reel")
+    default = gc("stuttgartmitkind", "something else", "Video/Reel")
     assert "Nicky" in default
 
 
@@ -279,17 +279,18 @@ def test_generate_comment_ankes_insta_various(mock_browser_cls, mock_api_cls, mo
     mock_api_cls.return_value = mock_api
     agent = InstagramAgent(settings)
 
-    assert agent._generate_comment("ankes_insta", "love relationship paar", "Video/Reel") is not None
-    assert agent._generate_comment("ankes_insta", "floriano baby newborn", "Video/Reel") is not None
-    assert agent._generate_comment("ankes_insta", "greece griechenland sommer", "Video/Reel") is not None
-    assert agent._generate_comment("ankes_insta", "turkey extended summer türkei", "Video/Reel") is not None
-    assert agent._generate_comment("ankes_insta", "colorfully languages greeting", "Video/Reel") is not None
-    assert agent._generate_comment("ankes_insta", "podcast where are they now", "Video/Reel") is not None
+    gc = agent._generate_comment
+    assert gc("ankes_insta", "love relationship paar", "Video/Reel") is not None
+    assert gc("ankes_insta", "floriano baby newborn", "Video/Reel") is not None
+    assert gc("ankes_insta", "greece griechenland sommer", "Video/Reel") is not None
+    assert gc("ankes_insta", "turkey extended summer türkei", "Video/Reel") is not None
+    assert gc("ankes_insta", "colorfully languages greeting", "Video/Reel") is not None
+    assert gc("ankes_insta", "podcast where are they now", "Video/Reel") is not None
     # floriano fallback (without other keywords)
-    result = agent._generate_comment("ankes_insta", "floriano", "Video/Reel")
+    result = gc("ankes_insta", "floriano", "Video/Reel")
     assert result is not None
     # Default
-    default = agent._generate_comment("ankes_insta", "something else entirely", "Video/Reel")
+    default = gc("ankes_insta", "something else entirely", "Video/Reel")
     assert default == "Beautiful content! 💕"
 
 

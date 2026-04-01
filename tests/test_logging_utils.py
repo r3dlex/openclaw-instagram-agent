@@ -3,8 +3,6 @@
 from __future__ import annotations
 
 import logging
-from pathlib import Path
-from unittest.mock import patch
 
 from openclaw_instagram.utils.logging import setup_logging
 
