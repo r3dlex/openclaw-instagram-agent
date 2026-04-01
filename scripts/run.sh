@@ -13,9 +13,9 @@ if ! [ -f .env ]; then
     exit 1
 fi
 
-if command -v docker &>/dev/null; then
+if command -v docker-compose &>/dev/null; then
     echo "Using Docker..."
-    docker compose run --rm agent "$@"
+    docker-compose run --rm agent "$@"
 elif command -v poetry &>/dev/null; then
     echo "Using Poetry..."
     poetry install --quiet

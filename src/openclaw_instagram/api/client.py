@@ -30,6 +30,7 @@ SESSION_CACHE_DIR = Path("session_cache")
 SESSION_FILE = SESSION_CACHE_DIR / "session.json"
 API_FAILURE_FILE = SESSION_CACHE_DIR / "api_failure_timestamp"
 LIKED_CACHE_FILE = SESSION_CACHE_DIR / "liked_posts.json"
+COMMENTED_CACHE_FILE = SESSION_CACHE_DIR / "commented_posts.json"
 
 
 class InstagramAPIClient:
@@ -90,6 +91,7 @@ class InstagramAPIClient:
             )
         except TwoFactorRequired:
             if not self.settings.ig_2fa_seed:
+                logger.error("instagram_2fa_required_no_seed")
                 raise RuntimeError(
                     "Instagram requires 2FA but IG_2FA_SEED is not set. "
                     "Add your TOTP seed to .env to enable automatic 2FA."
@@ -236,6 +238,18 @@ class InstagramAPIClient:
         liked = self.get_liked_posts()
         liked.add(str(media_pk))
         LIKED_CACHE_FILE.write_text(json.dumps(sorted(liked)))
+
+    def get_commented_posts(self) -> set[str]:
+        """Load set of already-commented post PKs from cache."""
+        if COMMENTED_CACHE_FILE.exists():
+            return set(json.loads(COMMENTED_CACHE_FILE.read_text()))
+        return set()
+
+    def mark_commented(self, media_pk: str) -> None:
+        """Record a post as commented in the cache."""
+        commented = self.get_commented_posts()
+        commented.add(str(media_pk))
+        COMMENTED_CACHE_FILE.write_text(json.dumps(sorted(commented)))
 
     def close(self) -> None:
         """Save session and clean up."""
