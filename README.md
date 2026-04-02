@@ -145,6 +145,14 @@ See [CLAUDE.md](CLAUDE.md) for development guide, [spec/TESTING.md](spec/TESTING
 - [spec/LEARNINGS.md](spec/LEARNINGS.md) — Runtime learnings (agent-maintained)
 - [.archgate/adrs/](.archgate/adrs/) — Architecture Decision Records
 
+## Related
+
+- [openclaw-inter-agent-message-queue](https://github.com/r3dlex/openclaw-inter-agent-message-queue) — IAMQ: message bus, agent registry, and cron scheduler
+  - [HTTP API reference](https://github.com/r3dlex/openclaw-inter-agent-message-queue/blob/main/spec/API.md)
+  - [Cron subsystem](https://github.com/r3dlex/openclaw-inter-agent-message-queue/blob/main/spec/CRON.md)
+  - [Sidecar client](https://github.com/r3dlex/openclaw-inter-agent-message-queue/tree/main/sidecar)
+- [openclaw-main-agent](https://github.com/r3dlex/openclaw-main-agent) — Cross-agent pipeline orchestrator
+
 ## License
 
 [MIT](LICENSE)
