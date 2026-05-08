@@ -55,6 +55,7 @@ class InstagramAgent:
         self.api = InstagramAPIClient(
             self.settings, iamq_client=self.iamq
         )
+        self._api_fatal = False  # set True on BadPassword / hard login failures
         self.browser = BrowserFallback(self.settings)
         self.iamq.start()
 
@@ -65,8 +66,15 @@ class InstagramAgent:
         for username in usernames:
             logger.info("engaging_account", username=username)
 
-            if self.api.api_available:
+            if self.api.api_available and not self._api_fatal:
                 result = self._engage_via_api(username)
+                if self._api_fatal:
+                    # API permanently failed (e.g. BadPassword), switch to browser for rest
+                    logger.warning("switching_to_browser_mode", reason="api_fatal")
+                    for remaining in usernames[usernames.index(username) + 1:]:
+                        br_result = asyncio.run(self._engage_via_browser(remaining))
+                        results[remaining] = br_result
+                    break
             else:
                 result = asyncio.run(self._engage_via_browser(username))
 
@@ -86,7 +94,14 @@ class InstagramAgent:
             "posts": [], "errors": [],
         }
 
-        user_id = self.api.get_user_id(username)
+        try:
+            user_id = self.api.get_user_id(username)
+        except Exception as e:
+            logger.error("api_login_failed", username=username, error=str(e))
+            result["errors"].append(f"API login failed: {e}")
+            self.api._mark_api_failed()
+            self._api_fatal = True
+            return result
         if not user_id:
             result["errors"].append(f"Could not resolve user: {username}")
             return result

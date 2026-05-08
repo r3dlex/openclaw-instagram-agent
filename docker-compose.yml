@@ -2,9 +2,14 @@ services:
   agent:
     build: .
     env_file: .env
+    environment:
+      - EMBEDDINGS_URL=http://host.docker.internal:18795
     volumes:
       - ./session_cache:/app/session_cache
       - ./logs:/app/logs
+      - ../skills-cli:/skills-cli:ro
+      - ../skills:/workspace/skills:rw
+      - ./skills:/agent/skills:rw
     # Override command as needed:
     #   docker compose run agent engage --list a
     #   docker compose run agent dms --list a

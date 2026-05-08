@@ -1,0 +1,13 @@
+{
+  "name": "engagement_analyze",
+  "version": 1,
+  "quality_score": 0.5,
+  "description": "Analyze engagement metrics for recent posts",
+  "input_schema": {
+    "type": "object",
+    "properties": {
+      "lookback_days": {"type": "integer", "description": "Number of days to look back for post analysis"}
+    },
+    "required": ["lookback_days"]
+  }
+}
