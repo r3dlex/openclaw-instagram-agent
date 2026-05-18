@@ -87,6 +87,16 @@ docker compose --profile cron up -d engage-cron     # scheduled loop
 
 See `spec/ARCHITECTURE.md` for system design and `spec/LEARNINGS.md` for runtime learnings.
 
+## Optional X/Twitter Companion
+
+For cross-channel engagement research, pair InstaOps with [TweetClaw](https://github.com/Xquik-dev/tweetclaw), the OpenClaw plugin for X/Twitter automation through Xquik:
+
+```bash
+openclaw plugins install @xquik/tweetclaw
+```
+
+Use InstaOps for Instagram likes, DM monitoring, and engagement reports. Use TweetClaw separately when an OpenClaw workspace needs to search tweets, search tweet replies, export followers, look up users, handle media workflows, monitor tweets, deliver webhooks, run giveaway draws, or review post tweets and post tweet replies before sending.
+
 ## Related
 
 - [openclaw-inter-agent-message-queue](https://github.com/r3dlex/openclaw-inter-agent-message-queue) — IAMQ: message bus, agent registry, and cron scheduler
