@@ -7,101 +7,218 @@ on:
     branches: [main]
 
 jobs:
-  ci:
-    name: Full CI Pipeline
-    runs-on: ubuntu-latest
-
+  # ==========================================================================
+  # ci (Full CI Pipeline)
+  # ==========================================================================
+  _ci-self-hosted:
+    name: "Full CI Pipeline (self-hosted)"
+    runs-on: [self-hosted, ubuntu-latest]
+    continue-on-error: true
+    outputs:
+      passed: ${{ steps.mark.outputs.passed }}
     steps:
       - uses: actions/checkout@v4
-
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-
       - name: Install Poetry
         uses: snok/install-poetry@v1
         with:
           version: "1.8.5"
           virtualenvs-in-project: true
-
       - name: Cache dependencies
         uses: actions/cache@v4
         with:
           path: .venv
           key: venv-${{ runner.os }}-${{ hashFiles('poetry.lock') }}
-
       - name: Install dependencies
         run: poetry install --with dev
-
       - name: Create dummy .env for CI
         run: cp .env.example .env
-
       - name: Run CI pipeline
         run: poetry run pipeline ci --json
+      - id: mark
+        if: success()
+        run: echo "passed=true" >> "$GITHUB_OUTPUT"
+
+  ci:
+    name: Full CI Pipeline
+    needs: _ci-self-hosted
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Route
+        run: echo "self-hosted passed=${{ needs._ci-self-hosted.outputs.passed }}"
+      - uses: actions/checkout@v4
+        if: needs._ci-self-hosted.outputs.passed != 'true'
+      - name: Set up Python
+        if: needs._ci-self-hosted.outputs.passed != 'true'
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install Poetry
+        if: needs._ci-self-hosted.outputs.passed != 'true'
+        uses: snok/install-poetry@v1
+        with:
+          version: "1.8.5"
+          virtualenvs-in-project: true
+      - name: Cache dependencies
+        if: needs._ci-self-hosted.outputs.passed != 'true'
+        uses: actions/cache@v4
+        with:
+          path: .venv
+          key: venv-${{ runner.os }}-${{ hashFiles('poetry.lock') }}
+      - name: Install dependencies
+        if: needs._ci-self-hosted.outputs.passed != 'true'
+        run: poetry install --with dev
+      - name: Create dummy .env for CI
+        if: needs._ci-self-hosted.outputs.passed != 'true'
+        run: cp .env.example .env
+      - name: Run CI pipeline
+        if: needs._ci-self-hosted.outputs.passed != 'true'
+        run: poetry run pipeline ci --json
+
+  # ==========================================================================
+  # security (Security Pipeline)
+  # ==========================================================================
+  _security-self-hosted:
+    name: "Security Pipeline (self-hosted)"
+    runs-on: [self-hosted, ubuntu-latest]
+    continue-on-error: true
+    outputs:
+      passed: ${{ steps.mark.outputs.passed }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          version: "1.8.5"
+          virtualenvs-in-project: true
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: .venv
+          key: venv-${{ runner.os }}-${{ hashFiles('poetry.lock') }}
+      - name: Install dependencies
+        run: poetry install --with dev
+      - name: Create dummy .env for CI
+        run: cp .env.example .env
+      - name: Run security pipeline
+        run: poetry run pipeline security --json
+      - id: mark
+        if: success()
+        run: echo "passed=true" >> "$GITHUB_OUTPUT"
 
   security:
     name: Security Pipeline
+    needs: _security-self-hosted
+    if: always()
     runs-on: ubuntu-latest
+    steps:
+      - name: Route
+        run: echo "self-hosted passed=${{ needs._security-self-hosted.outputs.passed }}"
+      - uses: actions/checkout@v4
+        if: needs._security-self-hosted.outputs.passed != 'true'
+      - name: Set up Python
+        if: needs._security-self-hosted.outputs.passed != 'true'
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install Poetry
+        if: needs._security-self-hosted.outputs.passed != 'true'
+        uses: snok/install-poetry@v1
+        with:
+          version: "1.8.5"
+          virtualenvs-in-project: true
+      - name: Cache dependencies
+        if: needs._security-self-hosted.outputs.passed != 'true'
+        uses: actions/cache@v4
+        with:
+          path: .venv
+          key: venv-${{ runner.os }}-${{ hashFiles('poetry.lock') }}
+      - name: Install dependencies
+        if: needs._security-self-hosted.outputs.passed != 'true'
+        run: poetry install --with dev
+      - name: Create dummy .env for CI
+        if: needs._security-self-hosted.outputs.passed != 'true'
+        run: cp .env.example .env
+      - name: Run security pipeline
+        if: needs._security-self-hosted.outputs.passed != 'true'
+        run: poetry run pipeline security --json
 
+  # ==========================================================================
+  # docs (Docs Pipeline)
+  # ==========================================================================
+  _docs-self-hosted:
+    name: "Docs Pipeline (self-hosted)"
+    runs-on: [self-hosted, ubuntu-latest]
+    continue-on-error: true
+    outputs:
+      passed: ${{ steps.mark.outputs.passed }}
     steps:
       - uses: actions/checkout@v4
-
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-
       - name: Install Poetry
         uses: snok/install-poetry@v1
         with:
           version: "1.8.5"
           virtualenvs-in-project: true
-
       - name: Cache dependencies
         uses: actions/cache@v4
         with:
           path: .venv
           key: venv-${{ runner.os }}-${{ hashFiles('poetry.lock') }}
-
       - name: Install dependencies
         run: poetry install --with dev
-
       - name: Create dummy .env for CI
         run: cp .env.example .env
-
-      - name: Run security pipeline
-        run: poetry run pipeline security --json
+      - name: Run docs pipeline
+        run: poetry run pipeline docs --json
+      - id: mark
+        if: success()
+        run: echo "passed=true" >> "$GITHUB_OUTPUT"
 
   docs:
     name: Docs Pipeline
+    needs: _docs-self-hosted
+    if: always()
     runs-on: ubuntu-latest
-
     steps:
+      - name: Route
+        run: echo "self-hosted passed=${{ needs._docs-self-hosted.outputs.passed }}"
       - uses: actions/checkout@v4
-
+        if: needs._docs-self-hosted.outputs.passed != 'true'
       - name: Set up Python
+        if: needs._docs-self-hosted.outputs.passed != 'true'
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-
       - name: Install Poetry
+        if: needs._docs-self-hosted.outputs.passed != 'true'
         uses: snok/install-poetry@v1
         with:
           version: "1.8.5"
           virtualenvs-in-project: true
-
       - name: Cache dependencies
+        if: needs._docs-self-hosted.outputs.passed != 'true'
         uses: actions/cache@v4
         with:
           path: .venv
           key: venv-${{ runner.os }}-${{ hashFiles('poetry.lock') }}
-
       - name: Install dependencies
+        if: needs._docs-self-hosted.outputs.passed != 'true'
         run: poetry install --with dev
-
       - name: Create dummy .env for CI
+        if: needs._docs-self-hosted.outputs.passed != 'true'
         run: cp .env.example .env
-
       - name: Run docs pipeline
+        if: needs._docs-self-hosted.outputs.passed != 'true'
         run: poetry run pipeline docs --json
