@@ -19,11 +19,18 @@ jobs:
     name: "Full CI Pipeline (self-hosted)"
     runs-on: [self-hosted, mac-arm64]
     continue-on-error: true
+    # The hosted fallback only starts once this job CONCLUDES, so a runner
+    # that dies mid-job would hold the required checks pending for GitHub's
+    # default 360-minute timeout. Real work takes ~25 s; 20 minutes is a
+    # generous bound that still fails fast.
+    timeout-minutes: 20
     env:
       # runner-1 and runner-2 are two runner instances on ONE host that share a
-      # single $HOME, and these jobs can overlap. Point every shared install
-      # location at a per-job directory so concurrent jobs cannot clobber each
-      # other's Poetry install, config, virtualenv or interpreter.
+      # single $HOME, and their jobs can overlap. Point every shared install
+      # location at the runner's own workspace so concurrent jobs cannot clobber
+      # each other's Poetry install, config, virtualenv or interpreter. (A
+      # runner runs one job at a time, so the workspace is per runner, not per
+      # job - but it is never shared between runner-1 and runner-2.)
       POETRY_HOME: ${{ github.workspace }}/.poetry
       # Poetry's config.toml lives in the OS config dir
       # (~/Library/Application Support/pypoetry), NOT under POETRY_HOME, and
@@ -45,8 +52,10 @@ jobs:
         with:
           version: "1.8.5"
           # Poetry's default is {cache-dir}/virtualenvs and cache-dir is the
-          # shared ~/Library/Caches/pypoetry - not per-job. Point the venv at
-          # the per-job workspace so it can never land in a shared path.
+          # shared ~/Library/Caches/pypoetry - not per-runner. Pin the venv
+          # into the runner's own workspace so it can never land in a shared
+          # path, whichever way Poetry decides to materialise it.
+          virtualenvs-in-project: true
           virtualenvs-path: ${{ github.workspace }}/.venv
       - name: Cache dependencies
         uses: actions/cache@v4
@@ -113,11 +122,18 @@ jobs:
     name: "Security Pipeline (self-hosted)"
     runs-on: [self-hosted, mac-arm64]
     continue-on-error: true
+    # The hosted fallback only starts once this job CONCLUDES, so a runner
+    # that dies mid-job would hold the required checks pending for GitHub's
+    # default 360-minute timeout. Real work takes ~25 s; 20 minutes is a
+    # generous bound that still fails fast.
+    timeout-minutes: 20
     env:
       # runner-1 and runner-2 are two runner instances on ONE host that share a
-      # single $HOME, and these jobs can overlap. Point every shared install
-      # location at a per-job directory so concurrent jobs cannot clobber each
-      # other's Poetry install, config, virtualenv or interpreter.
+      # single $HOME, and their jobs can overlap. Point every shared install
+      # location at the runner's own workspace so concurrent jobs cannot clobber
+      # each other's Poetry install, config, virtualenv or interpreter. (A
+      # runner runs one job at a time, so the workspace is per runner, not per
+      # job - but it is never shared between runner-1 and runner-2.)
       POETRY_HOME: ${{ github.workspace }}/.poetry
       # Poetry's config.toml lives in the OS config dir
       # (~/Library/Application Support/pypoetry), NOT under POETRY_HOME, and
@@ -139,8 +155,10 @@ jobs:
         with:
           version: "1.8.5"
           # Poetry's default is {cache-dir}/virtualenvs and cache-dir is the
-          # shared ~/Library/Caches/pypoetry - not per-job. Point the venv at
-          # the per-job workspace so it can never land in a shared path.
+          # shared ~/Library/Caches/pypoetry - not per-runner. Pin the venv
+          # into the runner's own workspace so it can never land in a shared
+          # path, whichever way Poetry decides to materialise it.
+          virtualenvs-in-project: true
           virtualenvs-path: ${{ github.workspace }}/.venv
       - name: Cache dependencies
         uses: actions/cache@v4
@@ -207,11 +225,18 @@ jobs:
     name: "Docs Pipeline (self-hosted)"
     runs-on: [self-hosted, mac-arm64]
     continue-on-error: true
+    # The hosted fallback only starts once this job CONCLUDES, so a runner
+    # that dies mid-job would hold the required checks pending for GitHub's
+    # default 360-minute timeout. Real work takes ~25 s; 20 minutes is a
+    # generous bound that still fails fast.
+    timeout-minutes: 20
     env:
       # runner-1 and runner-2 are two runner instances on ONE host that share a
-      # single $HOME, and these jobs can overlap. Point every shared install
-      # location at a per-job directory so concurrent jobs cannot clobber each
-      # other's Poetry install, config, virtualenv or interpreter.
+      # single $HOME, and their jobs can overlap. Point every shared install
+      # location at the runner's own workspace so concurrent jobs cannot clobber
+      # each other's Poetry install, config, virtualenv or interpreter. (A
+      # runner runs one job at a time, so the workspace is per runner, not per
+      # job - but it is never shared between runner-1 and runner-2.)
       POETRY_HOME: ${{ github.workspace }}/.poetry
       # Poetry's config.toml lives in the OS config dir
       # (~/Library/Application Support/pypoetry), NOT under POETRY_HOME, and
@@ -233,8 +258,10 @@ jobs:
         with:
           version: "1.8.5"
           # Poetry's default is {cache-dir}/virtualenvs and cache-dir is the
-          # shared ~/Library/Caches/pypoetry - not per-job. Point the venv at
-          # the per-job workspace so it can never land in a shared path.
+          # shared ~/Library/Caches/pypoetry - not per-runner. Pin the venv
+          # into the runner's own workspace so it can never land in a shared
+          # path, whichever way Poetry decides to materialise it.
+          virtualenvs-in-project: true
           virtualenvs-path: ${{ github.workspace }}/.venv
       - name: Cache dependencies
         uses: actions/cache@v4
