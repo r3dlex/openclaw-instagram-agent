@@ -18,10 +18,19 @@ jobs:
       passed: ${{ steps.mark.outputs.passed }}
     steps:
       - uses: actions/checkout@v4
+      # actions/setup-python cannot run on macOS self-hosted runners: it hardcodes
+      # /Users/runner/hostedtoolcache and then `sudo installer`s into /Library/Frameworks.
+      # uv's managed CPython is relocatable and user-writable: no sudo, no /Users/runner.
       - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
+        run: |
+          set -euo pipefail
+          command -v uv >/dev/null || { echo "::error::uv is not on PATH"; exit 1; }
+          uv python install 3.11
+          PY="$(uv python find --managed-python 3.11)"
+          test -x "$PY" || { echo "::error::interpreter is not executable: $PY"; exit 1; }
+          "$PY" -c 'import sys, ssl, sysconfig; print(sys.version); print(sysconfig.get_platform())'
+          echo "$(dirname "$PY")" >> "$GITHUB_PATH"
+          echo "PYTHON=$PY" >> "$GITHUB_ENV"
       - name: Install Poetry
         uses: snok/install-poetry@v1
         with:
@@ -90,10 +99,19 @@ jobs:
       passed: ${{ steps.mark.outputs.passed }}
     steps:
       - uses: actions/checkout@v4
+      # actions/setup-python cannot run on macOS self-hosted runners: it hardcodes
+      # /Users/runner/hostedtoolcache and then `sudo installer`s into /Library/Frameworks.
+      # uv's managed CPython is relocatable and user-writable: no sudo, no /Users/runner.
       - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
+        run: |
+          set -euo pipefail
+          command -v uv >/dev/null || { echo "::error::uv is not on PATH"; exit 1; }
+          uv python install 3.11
+          PY="$(uv python find --managed-python 3.11)"
+          test -x "$PY" || { echo "::error::interpreter is not executable: $PY"; exit 1; }
+          "$PY" -c 'import sys, ssl, sysconfig; print(sys.version); print(sysconfig.get_platform())'
+          echo "$(dirname "$PY")" >> "$GITHUB_PATH"
+          echo "PYTHON=$PY" >> "$GITHUB_ENV"
       - name: Install Poetry
         uses: snok/install-poetry@v1
         with:
@@ -162,10 +180,19 @@ jobs:
       passed: ${{ steps.mark.outputs.passed }}
     steps:
       - uses: actions/checkout@v4
+      # actions/setup-python cannot run on macOS self-hosted runners: it hardcodes
+      # /Users/runner/hostedtoolcache and then `sudo installer`s into /Library/Frameworks.
+      # uv's managed CPython is relocatable and user-writable: no sudo, no /Users/runner.
       - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
+        run: |
+          set -euo pipefail
+          command -v uv >/dev/null || { echo "::error::uv is not on PATH"; exit 1; }
+          uv python install 3.11
+          PY="$(uv python find --managed-python 3.11)"
+          test -x "$PY" || { echo "::error::interpreter is not executable: $PY"; exit 1; }
+          "$PY" -c 'import sys, ssl, sysconfig; print(sys.version); print(sysconfig.get_platform())'
+          echo "$(dirname "$PY")" >> "$GITHUB_PATH"
+          echo "PYTHON=$PY" >> "$GITHUB_ENV"
       - name: Install Poetry
         uses: snok/install-poetry@v1
         with:
@@ -222,3 +249,31 @@ jobs:
       - name: Run docs pipeline
         if: needs._docs-self-hosted.outputs.passed != 'true'
         run: poetry run pipeline docs --json
+
+  # ==========================================================================
+  # Probe: which setup-* actions are usable on these macOS runners?
+  # node-version 24 is not in the runner tool cache, so setup-node performs a
+  # real download + tool-cache install instead of a cache hit.
+  # ==========================================================================
+  _probe-setup-actions:
+    name: "Probe: setup-python vs setup-node (self-hosted)"
+    runs-on: [self-hosted, mac-arm64]
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - name: Record tool cache
+        run: echo "RUNNER_TOOL_CACHE=$RUNNER_TOOL_CACHE" && ls "$RUNNER_TOOL_CACHE"
+      - name: setup-python (expected to fail on macOS)
+        id: setup_python
+        continue-on-error: true
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: setup-python outcome
+        run: echo "setup-python outcome=${{ steps.setup_python.outcome }}"
+      - name: setup-node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Verify node
+        run: node --version && npm --version && which node
