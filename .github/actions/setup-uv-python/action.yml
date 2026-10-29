@@ -1,0 +1,36 @@
+name: Set up Python (uv-managed)
+description: >-
+  Install a uv-managed CPython and put it first on PATH for the rest of the job.
+  actions/setup-python cannot run on macOS self-hosted runners: it hardcodes
+  /Users/runner/hostedtoolcache and then `sudo installer`s the framework into
+  /Library/Frameworks, neither of which a job can satisfy without root. uv's
+  managed CPython is relocatable and user-writable, so it needs neither.
+
+inputs:
+  python-version:
+    description: CPython version to install.
+    required: false
+    default: "3.11"
+
+runs:
+  using: composite
+  steps:
+    - name: Install and verify the uv-managed interpreter
+      shell: bash
+      env:
+        PYTHON_VERSION: ${{ inputs.python-version }}
+      run: |
+        set -euo pipefail
+        # Per-job install directory: two runners on one host share $HOME, so a
+        # shared interpreter would let concurrent jobs overwrite each other.
+        export UV_PYTHON_INSTALL_DIR="${UV_PYTHON_INSTALL_DIR:-$GITHUB_WORKSPACE/.uv-python}"
+        command -v uv >/dev/null || { echo "::error::uv is not on PATH"; exit 1; }
+        uv python install "$PYTHON_VERSION"
+        PY="$(uv python find --managed-python "$PYTHON_VERSION")"
+        test -x "$PY" || { echo "::error::interpreter is not executable: $PY"; exit 1; }
+        "$PY" -c 'import sys, ssl, sysconfig; print(sys.version); print(sysconfig.get_platform())'
+        # GITHUB_PATH prepends, so a later bare `python3` resolves here and not
+        # to /opt/homebrew/bin/python3 or /usr/bin/python3.
+        echo "$(dirname "$PY")" >> "$GITHUB_PATH"
+        echo "PYTHON=$PY" >> "$GITHUB_ENV"
+        echo "UV_PYTHON_INSTALL_DIR=$UV_PYTHON_INSTALL_DIR" >> "$GITHUB_ENV"

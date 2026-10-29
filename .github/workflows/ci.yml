@@ -16,10 +16,14 @@ jobs:
     continue-on-error: true
     env:
       # runner-1 and runner-2 are two runner instances on ONE host that share a
-      # single $HOME, and these jobs can overlap. Point both shared install
-      # locations at per-job directories so concurrent jobs cannot clobber each
-      # other's Poetry virtualenv or interpreter.
+      # single $HOME, and these jobs can overlap. Point every shared install
+      # location at a per-job directory so concurrent jobs cannot clobber each
+      # other's Poetry install, config, virtualenv or interpreter.
       POETRY_HOME: ${{ github.workspace }}/.poetry
+      # Poetry's config.toml lives in the OS config dir
+      # (~/Library/Application Support/pypoetry), NOT under POETRY_HOME, and
+      # snok/install-poetry rewrites it on every job.
+      POETRY_CONFIG_DIR: ${{ github.workspace }}/.poetry-config
       UV_PYTHON_INSTALL_DIR: ${{ github.workspace }}/.uv-python
     outputs:
       passed: ${{ steps.mark.outputs.passed }}
@@ -29,20 +33,15 @@ jobs:
       # /Users/runner/hostedtoolcache and then `sudo installer`s into /Library/Frameworks.
       # uv's managed CPython is relocatable and user-writable: no sudo, no /Users/runner.
       - name: Set up Python
-        run: |
-          set -euo pipefail
-          command -v uv >/dev/null || { echo "::error::uv is not on PATH"; exit 1; }
-          uv python install 3.11
-          PY="$(uv python find --managed-python 3.11)"
-          test -x "$PY" || { echo "::error::interpreter is not executable: $PY"; exit 1; }
-          "$PY" -c 'import sys, ssl, sysconfig; print(sys.version); print(sysconfig.get_platform())'
-          echo "$(dirname "$PY")" >> "$GITHUB_PATH"
-          echo "PYTHON=$PY" >> "$GITHUB_ENV"
+        uses: ./.github/actions/setup-uv-python
       - name: Install Poetry
         uses: snok/install-poetry@v1
         with:
           version: "1.8.5"
-          virtualenvs-in-project: true
+          # Poetry's default is {cache-dir}/virtualenvs and cache-dir is the
+          # shared ~/Library/Caches/pypoetry - not per-job. Point the venv at
+          # the per-job workspace so it can never land in a shared path.
+          virtualenvs-path: ${{ github.workspace }}/.virtualenvs
       - name: Cache dependencies
         uses: actions/cache@v4
         with:
@@ -104,10 +103,14 @@ jobs:
     continue-on-error: true
     env:
       # runner-1 and runner-2 are two runner instances on ONE host that share a
-      # single $HOME, and these jobs can overlap. Point both shared install
-      # locations at per-job directories so concurrent jobs cannot clobber each
-      # other's Poetry virtualenv or interpreter.
+      # single $HOME, and these jobs can overlap. Point every shared install
+      # location at a per-job directory so concurrent jobs cannot clobber each
+      # other's Poetry install, config, virtualenv or interpreter.
       POETRY_HOME: ${{ github.workspace }}/.poetry
+      # Poetry's config.toml lives in the OS config dir
+      # (~/Library/Application Support/pypoetry), NOT under POETRY_HOME, and
+      # snok/install-poetry rewrites it on every job.
+      POETRY_CONFIG_DIR: ${{ github.workspace }}/.poetry-config
       UV_PYTHON_INSTALL_DIR: ${{ github.workspace }}/.uv-python
     outputs:
       passed: ${{ steps.mark.outputs.passed }}
@@ -117,20 +120,15 @@ jobs:
       # /Users/runner/hostedtoolcache and then `sudo installer`s into /Library/Frameworks.
       # uv's managed CPython is relocatable and user-writable: no sudo, no /Users/runner.
       - name: Set up Python
-        run: |
-          set -euo pipefail
-          command -v uv >/dev/null || { echo "::error::uv is not on PATH"; exit 1; }
-          uv python install 3.11
-          PY="$(uv python find --managed-python 3.11)"
-          test -x "$PY" || { echo "::error::interpreter is not executable: $PY"; exit 1; }
-          "$PY" -c 'import sys, ssl, sysconfig; print(sys.version); print(sysconfig.get_platform())'
-          echo "$(dirname "$PY")" >> "$GITHUB_PATH"
-          echo "PYTHON=$PY" >> "$GITHUB_ENV"
+        uses: ./.github/actions/setup-uv-python
       - name: Install Poetry
         uses: snok/install-poetry@v1
         with:
           version: "1.8.5"
-          virtualenvs-in-project: true
+          # Poetry's default is {cache-dir}/virtualenvs and cache-dir is the
+          # shared ~/Library/Caches/pypoetry - not per-job. Point the venv at
+          # the per-job workspace so it can never land in a shared path.
+          virtualenvs-path: ${{ github.workspace }}/.virtualenvs
       - name: Cache dependencies
         uses: actions/cache@v4
         with:
@@ -192,10 +190,14 @@ jobs:
     continue-on-error: true
     env:
       # runner-1 and runner-2 are two runner instances on ONE host that share a
-      # single $HOME, and these jobs can overlap. Point both shared install
-      # locations at per-job directories so concurrent jobs cannot clobber each
-      # other's Poetry virtualenv or interpreter.
+      # single $HOME, and these jobs can overlap. Point every shared install
+      # location at a per-job directory so concurrent jobs cannot clobber each
+      # other's Poetry install, config, virtualenv or interpreter.
       POETRY_HOME: ${{ github.workspace }}/.poetry
+      # Poetry's config.toml lives in the OS config dir
+      # (~/Library/Application Support/pypoetry), NOT under POETRY_HOME, and
+      # snok/install-poetry rewrites it on every job.
+      POETRY_CONFIG_DIR: ${{ github.workspace }}/.poetry-config
       UV_PYTHON_INSTALL_DIR: ${{ github.workspace }}/.uv-python
     outputs:
       passed: ${{ steps.mark.outputs.passed }}
@@ -205,20 +207,15 @@ jobs:
       # /Users/runner/hostedtoolcache and then `sudo installer`s into /Library/Frameworks.
       # uv's managed CPython is relocatable and user-writable: no sudo, no /Users/runner.
       - name: Set up Python
-        run: |
-          set -euo pipefail
-          command -v uv >/dev/null || { echo "::error::uv is not on PATH"; exit 1; }
-          uv python install 3.11
-          PY="$(uv python find --managed-python 3.11)"
-          test -x "$PY" || { echo "::error::interpreter is not executable: $PY"; exit 1; }
-          "$PY" -c 'import sys, ssl, sysconfig; print(sys.version); print(sysconfig.get_platform())'
-          echo "$(dirname "$PY")" >> "$GITHUB_PATH"
-          echo "PYTHON=$PY" >> "$GITHUB_ENV"
+        uses: ./.github/actions/setup-uv-python
       - name: Install Poetry
         uses: snok/install-poetry@v1
         with:
           version: "1.8.5"
-          virtualenvs-in-project: true
+          # Poetry's default is {cache-dir}/virtualenvs and cache-dir is the
+          # shared ~/Library/Caches/pypoetry - not per-job. Point the venv at
+          # the per-job workspace so it can never land in a shared path.
+          virtualenvs-path: ${{ github.workspace }}/.virtualenvs
       - name: Cache dependencies
         uses: actions/cache@v4
         with:
@@ -280,8 +277,24 @@ jobs:
     name: "Probe: setup-python vs setup-node (self-hosted)"
     runs-on: [self-hosted, mac-arm64]
     continue-on-error: true
+    env:
+      POETRY_HOME: ${{ github.workspace }}/.poetry
+      POETRY_CONFIG_DIR: ${{ github.workspace }}/.poetry-config
+      UV_PYTHON_INSTALL_DIR: ${{ github.workspace }}/.uv-python
     steps:
       - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: ./.github/actions/setup-uv-python
+      - name: Record PATH ordering
+        run: |
+          echo "PATH=$PATH"
+          echo "uv=$(command -v uv)"
+          echo "which -a python3:"
+          which -a python3
+          echo "python3=$(python3 --version 2>&1)"
+          echo "python3 path=$(command -v python3)"
+          echo "PYTHON=$PYTHON"
+          "$PYTHON" --version
       - name: Record tool cache
         run: echo "RUNNER_TOOL_CACHE=$RUNNER_TOOL_CACHE" && ls "$RUNNER_TOOL_CACHE"
       - name: setup-python (expected to fail on macOS)
