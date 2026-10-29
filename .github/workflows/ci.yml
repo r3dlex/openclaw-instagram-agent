@@ -12,7 +12,7 @@ jobs:
   # ==========================================================================
   _ci-self-hosted:
     name: "Full CI Pipeline (self-hosted)"
-    runs-on: [self-hosted, ubuntu-latest]
+    runs-on: [self-hosted, mac-arm64]
     continue-on-error: true
     outputs:
       passed: ${{ steps.mark.outputs.passed }}
@@ -84,7 +84,7 @@ jobs:
   # ==========================================================================
   _security-self-hosted:
     name: "Security Pipeline (self-hosted)"
-    runs-on: [self-hosted, ubuntu-latest]
+    runs-on: [self-hosted, mac-arm64]
     continue-on-error: true
     outputs:
       passed: ${{ steps.mark.outputs.passed }}
@@ -156,7 +156,7 @@ jobs:
   # ==========================================================================
   _docs-self-hosted:
     name: "Docs Pipeline (self-hosted)"
-    runs-on: [self-hosted, ubuntu-latest]
+    runs-on: [self-hosted, mac-arm64]
     continue-on-error: true
     outputs:
       passed: ${{ steps.mark.outputs.passed }}
