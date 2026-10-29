@@ -30,7 +30,15 @@ runs:
         test -x "$PY" || { echo "::error::interpreter is not executable: $PY"; exit 1; }
         "$PY" -c 'import sys, ssl, sysconfig; print(sys.version); print(sysconfig.get_platform())'
         # GITHUB_PATH prepends, so a later bare `python3` resolves here and not
-        # to /opt/homebrew/bin/python3 or /usr/bin/python3.
+        # to /opt/homebrew/bin/python3 or /usr/bin/python3. Assert it now: the
+        # managed bin directory has to carry a `python3`, and the prepended
+        # directory has to win over whatever the runner's PATH already had.
+        export PATH="$(dirname "$PY"):$PATH"
+        RESOLVED="$(command -v python3 || true)"
+        case "$RESOLVED" in
+          "$(dirname "$PY")"/*) echo "python3 resolves to $RESOLVED" ;;
+          *) echo "::error::python3 resolves to '${RESOLVED:-<not found>}', expected the managed interpreter in $(dirname "$PY")"; exit 1 ;;
+        esac
         echo "$(dirname "$PY")" >> "$GITHUB_PATH"
         echo "PYTHON=$PY" >> "$GITHUB_ENV"
         echo "UV_PYTHON_INSTALL_DIR=$UV_PYTHON_INSTALL_DIR" >> "$GITHUB_ENV"

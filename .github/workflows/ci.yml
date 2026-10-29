@@ -6,6 +6,11 @@ on:
   pull_request:
     branches: [main]
 
+# The workflow only checks out code and runs it; it never needs to write to
+# the repository or to use the API with write scope.
+permissions:
+  contents: read
+
 jobs:
   # ==========================================================================
   # ci (Full CI Pipeline)
@@ -41,12 +46,16 @@ jobs:
           # Poetry's default is {cache-dir}/virtualenvs and cache-dir is the
           # shared ~/Library/Caches/pypoetry - not per-job. Point the venv at
           # the per-job workspace so it can never land in a shared path.
-          virtualenvs-path: ${{ github.workspace }}/.virtualenvs
+          virtualenvs-path: ${{ github.workspace }}/.venv
       - name: Cache dependencies
         uses: actions/cache@v4
         with:
           path: .venv
-          key: venv-${{ runner.os }}-${{ hashFiles('poetry.lock') }}
+          # runner.os is macOS for BOTH r3dlex-runner-1 and r3dlex-runner-2, so
+          # it alone would let one runner restore the other's venv - whose
+          # console-script shebangs and pyvenv.cfg point at that runner's
+          # absolute workspace and interpreter paths. runner.name separates them.
+          key: venv-${{ runner.os }}-${{ runner.name }}-${{ hashFiles('poetry.lock') }}
       - name: Install dependencies
         run: poetry install --with dev
       - name: Create dummy .env for CI
@@ -128,12 +137,16 @@ jobs:
           # Poetry's default is {cache-dir}/virtualenvs and cache-dir is the
           # shared ~/Library/Caches/pypoetry - not per-job. Point the venv at
           # the per-job workspace so it can never land in a shared path.
-          virtualenvs-path: ${{ github.workspace }}/.virtualenvs
+          virtualenvs-path: ${{ github.workspace }}/.venv
       - name: Cache dependencies
         uses: actions/cache@v4
         with:
           path: .venv
-          key: venv-${{ runner.os }}-${{ hashFiles('poetry.lock') }}
+          # runner.os is macOS for BOTH r3dlex-runner-1 and r3dlex-runner-2, so
+          # it alone would let one runner restore the other's venv - whose
+          # console-script shebangs and pyvenv.cfg point at that runner's
+          # absolute workspace and interpreter paths. runner.name separates them.
+          key: venv-${{ runner.os }}-${{ runner.name }}-${{ hashFiles('poetry.lock') }}
       - name: Install dependencies
         run: poetry install --with dev
       - name: Create dummy .env for CI
@@ -215,12 +228,16 @@ jobs:
           # Poetry's default is {cache-dir}/virtualenvs and cache-dir is the
           # shared ~/Library/Caches/pypoetry - not per-job. Point the venv at
           # the per-job workspace so it can never land in a shared path.
-          virtualenvs-path: ${{ github.workspace }}/.virtualenvs
+          virtualenvs-path: ${{ github.workspace }}/.venv
       - name: Cache dependencies
         uses: actions/cache@v4
         with:
           path: .venv
-          key: venv-${{ runner.os }}-${{ hashFiles('poetry.lock') }}
+          # runner.os is macOS for BOTH r3dlex-runner-1 and r3dlex-runner-2, so
+          # it alone would let one runner restore the other's venv - whose
+          # console-script shebangs and pyvenv.cfg point at that runner's
+          # absolute workspace and interpreter paths. runner.name separates them.
+          key: venv-${{ runner.os }}-${{ runner.name }}-${{ hashFiles('poetry.lock') }}
       - name: Install dependencies
         run: poetry install --with dev
       - name: Create dummy .env for CI
@@ -267,47 +284,3 @@ jobs:
       - name: Run docs pipeline
         if: needs._docs-self-hosted.outputs.passed != 'true'
         run: poetry run pipeline docs --json
-
-  # ==========================================================================
-  # Probe: which setup-* actions are usable on these macOS runners?
-  # node-version 24 is not in the runner tool cache, so setup-node performs a
-  # real download + tool-cache install instead of a cache hit.
-  # ==========================================================================
-  _probe-setup-actions:
-    name: "Probe: setup-python vs setup-node (self-hosted)"
-    runs-on: [self-hosted, mac-arm64]
-    continue-on-error: true
-    env:
-      POETRY_HOME: ${{ github.workspace }}/.poetry
-      POETRY_CONFIG_DIR: ${{ github.workspace }}/.poetry-config
-      UV_PYTHON_INSTALL_DIR: ${{ github.workspace }}/.uv-python
-    steps:
-      - uses: actions/checkout@v4
-      - name: Set up Python
-        uses: ./.github/actions/setup-uv-python
-      - name: Record PATH ordering
-        run: |
-          echo "PATH=$PATH"
-          echo "uv=$(command -v uv)"
-          echo "which -a python3:"
-          which -a python3
-          echo "python3=$(python3 --version 2>&1)"
-          echo "python3 path=$(command -v python3)"
-          echo "PYTHON=$PYTHON"
-          "$PYTHON" --version
-      - name: Record tool cache
-        run: echo "RUNNER_TOOL_CACHE=$RUNNER_TOOL_CACHE" && ls "$RUNNER_TOOL_CACHE"
-      - name: setup-python (expected to fail on macOS)
-        id: setup_python
-        continue-on-error: true
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-      - name: setup-python outcome
-        run: echo "setup-python outcome=${{ steps.setup_python.outcome }}"
-      - name: setup-node
-        uses: actions/setup-node@v4
-        with:
-          node-version: "24"
-      - name: Verify node
-        run: node --version && npm --version && which node
