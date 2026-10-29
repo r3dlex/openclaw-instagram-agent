@@ -14,6 +14,13 @@ jobs:
     name: "Full CI Pipeline (self-hosted)"
     runs-on: [self-hosted, mac-arm64]
     continue-on-error: true
+    env:
+      # runner-1 and runner-2 are two runner instances on ONE host that share a
+      # single $HOME, and these jobs can overlap. Point both shared install
+      # locations at per-job directories so concurrent jobs cannot clobber each
+      # other's Poetry virtualenv or interpreter.
+      POETRY_HOME: ${{ github.workspace }}/.poetry
+      UV_PYTHON_INSTALL_DIR: ${{ github.workspace }}/.uv-python
     outputs:
       passed: ${{ steps.mark.outputs.passed }}
     steps:
@@ -95,6 +102,13 @@ jobs:
     name: "Security Pipeline (self-hosted)"
     runs-on: [self-hosted, mac-arm64]
     continue-on-error: true
+    env:
+      # runner-1 and runner-2 are two runner instances on ONE host that share a
+      # single $HOME, and these jobs can overlap. Point both shared install
+      # locations at per-job directories so concurrent jobs cannot clobber each
+      # other's Poetry virtualenv or interpreter.
+      POETRY_HOME: ${{ github.workspace }}/.poetry
+      UV_PYTHON_INSTALL_DIR: ${{ github.workspace }}/.uv-python
     outputs:
       passed: ${{ steps.mark.outputs.passed }}
     steps:
@@ -176,6 +190,13 @@ jobs:
     name: "Docs Pipeline (self-hosted)"
     runs-on: [self-hosted, mac-arm64]
     continue-on-error: true
+    env:
+      # runner-1 and runner-2 are two runner instances on ONE host that share a
+      # single $HOME, and these jobs can overlap. Point both shared install
+      # locations at per-job directories so concurrent jobs cannot clobber each
+      # other's Poetry virtualenv or interpreter.
+      POETRY_HOME: ${{ github.workspace }}/.poetry
+      UV_PYTHON_INSTALL_DIR: ${{ github.workspace }}/.uv-python
     outputs:
       passed: ${{ steps.mark.outputs.passed }}
     steps:
