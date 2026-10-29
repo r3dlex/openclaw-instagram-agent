@@ -12,10 +12,20 @@ inputs:
     required: false
     default: "3.11"
 
+outputs:
+  python_key:
+    description: >-
+      Short digest of the managed interpreter's absolute path. Use it in a cache
+      key: that path embeds the runner's work root, the repository name and
+      the CPython version, so the digest changes exactly when a cached
+      virtualenv would have gone stale.
+    value: ${{ steps.install.outputs.python_key }}
+
 runs:
   using: composite
   steps:
-    - name: Install and verify the uv-managed interpreter
+    - id: install
+      name: Install and verify the uv-managed interpreter
       shell: bash
       env:
         PYTHON_VERSION: ${{ inputs.python-version }}
@@ -42,3 +52,9 @@ runs:
         echo "$(dirname "$PY")" >> "$GITHUB_PATH"
         echo "PYTHON=$PY" >> "$GITHUB_ENV"
         echo "UV_PYTHON_INSTALL_DIR=$UV_PYTHON_INSTALL_DIR" >> "$GITHUB_ENV"
+        # Cache-key discriminator. The interpreter's absolute path is
+        # <workspace>/.uv-python/cpython-<version>-<os>-<arch>/bin/python3.x,
+        # so it embeds the runner's work root, the repository name and the
+        # CPython version. Hashing it keeps the cache key short while still
+        # changing whenever a restored virtualenv would be stale.
+        echo "python_key=$("$PY" -c 'import hashlib,sys; print(hashlib.sha256(sys.argv[1].encode()).hexdigest()[:16])' "$PY")" >> "$GITHUB_OUTPUT"

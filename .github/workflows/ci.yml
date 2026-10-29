@@ -37,7 +37,8 @@ jobs:
       # actions/setup-python cannot run on macOS self-hosted runners: it hardcodes
       # /Users/runner/hostedtoolcache and then `sudo installer`s into /Library/Frameworks.
       # uv's managed CPython is relocatable and user-writable: no sudo, no /Users/runner.
-      - name: Set up Python
+      - id: python
+        name: Set up Python
         uses: ./.github/actions/setup-uv-python
       - name: Install Poetry
         uses: snok/install-poetry@v1
@@ -54,8 +55,10 @@ jobs:
           # runner.os is macOS for BOTH r3dlex-runner-1 and r3dlex-runner-2, so
           # it alone would let one runner restore the other's venv - whose
           # console-script shebangs and pyvenv.cfg point at that runner's
-          # absolute workspace and interpreter paths. runner.name separates them.
-          key: venv-${{ runner.os }}-${{ runner.name }}-${{ hashFiles('poetry.lock') }}
+          # absolute workspace and interpreter paths. runner.name separates the
+          # two runners; python_key is a digest of the interpreter's absolute
+          # path, which also covers a repository rename or a CPython upgrade.
+          key: venv-${{ runner.os }}-${{ runner.name }}-${{ steps.python.outputs.python_key }}-${{ hashFiles('poetry.lock') }}
       - name: Install dependencies
         run: poetry install --with dev
       - name: Create dummy .env for CI
@@ -128,7 +131,8 @@ jobs:
       # actions/setup-python cannot run on macOS self-hosted runners: it hardcodes
       # /Users/runner/hostedtoolcache and then `sudo installer`s into /Library/Frameworks.
       # uv's managed CPython is relocatable and user-writable: no sudo, no /Users/runner.
-      - name: Set up Python
+      - id: python
+        name: Set up Python
         uses: ./.github/actions/setup-uv-python
       - name: Install Poetry
         uses: snok/install-poetry@v1
@@ -145,8 +149,10 @@ jobs:
           # runner.os is macOS for BOTH r3dlex-runner-1 and r3dlex-runner-2, so
           # it alone would let one runner restore the other's venv - whose
           # console-script shebangs and pyvenv.cfg point at that runner's
-          # absolute workspace and interpreter paths. runner.name separates them.
-          key: venv-${{ runner.os }}-${{ runner.name }}-${{ hashFiles('poetry.lock') }}
+          # absolute workspace and interpreter paths. runner.name separates the
+          # two runners; python_key is a digest of the interpreter's absolute
+          # path, which also covers a repository rename or a CPython upgrade.
+          key: venv-${{ runner.os }}-${{ runner.name }}-${{ steps.python.outputs.python_key }}-${{ hashFiles('poetry.lock') }}
       - name: Install dependencies
         run: poetry install --with dev
       - name: Create dummy .env for CI
@@ -219,7 +225,8 @@ jobs:
       # actions/setup-python cannot run on macOS self-hosted runners: it hardcodes
       # /Users/runner/hostedtoolcache and then `sudo installer`s into /Library/Frameworks.
       # uv's managed CPython is relocatable and user-writable: no sudo, no /Users/runner.
-      - name: Set up Python
+      - id: python
+        name: Set up Python
         uses: ./.github/actions/setup-uv-python
       - name: Install Poetry
         uses: snok/install-poetry@v1
@@ -236,8 +243,10 @@ jobs:
           # runner.os is macOS for BOTH r3dlex-runner-1 and r3dlex-runner-2, so
           # it alone would let one runner restore the other's venv - whose
           # console-script shebangs and pyvenv.cfg point at that runner's
-          # absolute workspace and interpreter paths. runner.name separates them.
-          key: venv-${{ runner.os }}-${{ runner.name }}-${{ hashFiles('poetry.lock') }}
+          # absolute workspace and interpreter paths. runner.name separates the
+          # two runners; python_key is a digest of the interpreter's absolute
+          # path, which also covers a repository rename or a CPython upgrade.
+          key: venv-${{ runner.os }}-${{ runner.name }}-${{ steps.python.outputs.python_key }}-${{ hashFiles('poetry.lock') }}
       - name: Install dependencies
         run: poetry install --with dev
       - name: Create dummy .env for CI
