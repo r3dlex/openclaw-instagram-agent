@@ -11,15 +11,28 @@ inputs:
     description: CPython version to install.
     required: false
     default: "3.11"
+  uv-version:
+    description: >-
+      The exact uv version the workflow is expected to have installed. The
+      action fails when the uv on PATH is a different version, so a drifting
+      host toolchain can never silently change the interpreter this job builds
+      against.
+    required: false
+    default: "0.11.19"
 
 outputs:
   python_key:
     description: >-
-      Short digest of the managed interpreter's absolute path. Use it in a cache
-      key: that path embeds the runner's work root, the repository name and
-      the CPython version, so the digest changes exactly when a cached
-      virtualenv would have gone stale.
+      Short digest of the managed interpreter's absolute path AND its full
+      version, patch level included. Use it in a cache key: it changes exactly
+      when a cached virtualenv would have gone stale.
     value: ${{ steps.install.outputs.python_key }}
+  python_dir:
+    description: >-
+      The directory that holds the managed interpreter. It is prepended to
+      PATH, and the workflow re-asserts that `python3` still resolves inside
+      it after every step that can mutate PATH.
+    value: ${{ steps.install.outputs.python_dir }}
 
 runs:
   using: composite
@@ -29,14 +42,26 @@ runs:
       shell: bash
       env:
         PYTHON_VERSION: ${{ inputs.python-version }}
+        UV_VERSION_EXPECTED: ${{ inputs.uv-version }}
       run: |
         set -euo pipefail
-        # Per-runner-workspace install directory: two runners on one host share
-        # $HOME, so a shared interpreter would let concurrent jobs overwrite
-        # each other. A runner runs one job at a time, so the workspace is
-        # safe; it is not, however, per-job.
-        export UV_PYTHON_INSTALL_DIR="${UV_PYTHON_INSTALL_DIR:-$GITHUB_WORKSPACE/.uv-python}"
-        command -v uv >/dev/null || { echo "::error::uv is not on PATH"; exit 1; }
+        # The install directory is REQUIRED, not defaulted: actions/checkout
+        # runs `git clean -ffdx` over the workspace at the start of every job,
+        # so an interpreter installed there is deleted before the next job can
+        # reuse it. The workflow points this at the runner's tool cache, which
+        # is per runner and survives between jobs.
+        export UV_PYTHON_INSTALL_DIR="${UV_PYTHON_INSTALL_DIR:?UV_PYTHON_INSTALL_DIR must be set to a path outside the checkout tree}"
+        # uv is a DECLARED dependency of the workflow: astral-sh/setup-uv
+        # installs a pinned version before this action runs. Fail loudly when
+        # it is missing or is not the version the workflow pinned - the
+        # runners' $HOME carries whatever uv the operator happened to install,
+        # and an unpinned ambient uv is not a dependency, it is a lottery.
+        command -v uv >/dev/null || { echo "::error::uv is not on PATH; the workflow must install it with astral-sh/setup-uv before this action"; exit 1; }
+        UV_VERSION_ACTUAL="$(uv --version | awk '{print $2}')"
+        if [ "$UV_VERSION_ACTUAL" != "$UV_VERSION_EXPECTED" ]; then
+          echo "::error::uv $UV_VERSION_ACTUAL is on PATH but this workflow pins uv $UV_VERSION_EXPECTED"
+          exit 1
+        fi
         # --no-bin: without it uv also drops a python3.11 shim into ~/.local/bin,
         # which is the runners' SHARED $HOME and therefore a cross-job race.
         uv python install --no-bin "$PYTHON_VERSION"
@@ -56,9 +81,12 @@ runs:
         echo "$(dirname "$PY")" >> "$GITHUB_PATH"
         echo "PYTHON=$PY" >> "$GITHUB_ENV"
         echo "UV_PYTHON_INSTALL_DIR=$UV_PYTHON_INSTALL_DIR" >> "$GITHUB_ENV"
-        # Cache-key discriminator. The interpreter's absolute path is
-        # <workspace>/.uv-python/cpython-<version>-<os>-<arch>/bin/python3.x,
-        # so it embeds the runner's work root, the repository name and the
-        # CPython version. Hashing it keeps the cache key short while still
-        # changing whenever a restored virtualenv would be stale.
-        echo "python_key=$("$PY" -c 'import hashlib,sys; print(hashlib.sha256(sys.argv[1].encode()).hexdigest()[:16])' "$PY")" >> "$GITHUB_OUTPUT"
+        echo "python_dir=$(dirname "$PY")" >> "$GITHUB_OUTPUT"
+        # Cache-key discriminator. The interpreter's absolute path embeds the
+        # runner's tool cache and the CPython MINOR version; uv keeps a single
+        # install directory per minor version, so the path does NOT carry the
+        # patch level. The interpreter's own version adds it: without it a
+        # cache entry built against 3.11.15 would be restored on top of a
+        # 3.11.16 interpreter, with a stale pyvenv.cfg and stale
+        # console-script shebangs.
+        echo "python_key=$("$PY" -c 'import hashlib,sys,platform; print(hashlib.sha256((sys.argv[1] + platform.python_version()).encode()).hexdigest()[:16])' "$PY")" >> "$GITHUB_OUTPUT"

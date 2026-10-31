@@ -11,6 +11,14 @@ on:
 permissions:
   contents: read
 
+# Every push to a pull request starts a new run, and three self-hosted legs
+# then queue behind the two mac runners. Without this, superseded runs pile
+# up and hold the fleet while the required checks - which are the hosted
+# fallback jobs - wait behind them.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   # ==========================================================================
   # ci (Full CI Pipeline)
@@ -18,11 +26,23 @@ jobs:
   _ci-self-hosted:
     name: "Full CI Pipeline (self-hosted)"
     runs-on: [self-hosted, mac-arm64]
+    # Fork pull requests must never run here. The self-hosted mac runners are
+    # persistent and their $HOME is the operator's real home: it carries the
+    # GitHub OAuth token, the SSH keys and the Docker credentials, and nothing
+    # in the job wipes them. A branch that lives in THIS repository can only
+    # have been pushed by someone who already has write access, so it is
+    # trusted; a branch from a fork is not, and it falls through to the
+    # GitHub-hosted fallback below, which does the same work on GitHub's own
+    # infrastructure.
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
     continue-on-error: true
     # The hosted fallback only starts once this job CONCLUDES, so a runner
     # that dies mid-job would hold the required checks pending for GitHub's
     # default 360-minute timeout. Real work takes ~25 s; 20 minutes is a
-    # generous bound that still fails fast.
+    # generous bound that still fails fast. Note that timeout-minutes bounds
+    # the RUNNING phase only: a job queued behind a busy or offline runner
+    # stays pending until GitHub's own queue timeout expires, so this is not a
+    # bound on how long the queue can hold the required checks.
     timeout-minutes: 20
     env:
       # runner-1 and runner-2 are two runner instances on ONE host that share a
@@ -36,42 +56,82 @@ jobs:
       # (~/Library/Application Support/pypoetry), NOT under POETRY_HOME, and
       # snok/install-poetry rewrites it on every job.
       POETRY_CONFIG_DIR: ${{ github.workspace }}/.poetry-config
-      UV_PYTHON_INSTALL_DIR: ${{ github.workspace }}/.uv-python
     outputs:
       passed: ${{ steps.mark.outputs.passed }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      # uv is a DECLARED, pinned dependency of this workflow. It used to be
+      # picked up from whatever uv happened to be in the runners' shared
+      # $HOME, which is not a dependency but a lottery.
+      - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e
+        with:
+          version: "0.11.19"
       # actions/setup-python cannot run on macOS self-hosted runners: it hardcodes
       # /Users/runner/hostedtoolcache and then `sudo installer`s into /Library/Frameworks.
       # uv's managed CPython is relocatable and user-writable: no sudo, no /Users/runner.
       - id: python
         name: Set up Python
         uses: ./.github/actions/setup-uv-python
+        # The managed interpreter lives in the runner's TOOL CACHE, not in the
+        # workspace: actions/checkout runs `git clean -ffdx` over the workspace
+        # at the start of every job, so an interpreter installed there is
+        # deleted before the next job could reuse it - every job used to
+        # re-download the full 25.8 MiB CPython. The tool cache is per runner
+        # and survives between jobs. The runner context is not available in a
+        # job-level env block, so the path is set on the step that uses it.
+        env:
+          UV_PYTHON_INSTALL_DIR: ${{ runner.tool_cache }}/uv-python
+        with:
+          python-version: "3.11"
+          uv-version: "0.11.19"
       - name: Install Poetry
-        uses: snok/install-poetry@v1
+        uses: snok/install-poetry@a783c322200f0519c7926aa6faa857c4e23e9263
         with:
           version: "1.8.5"
           # Poetry's default is {cache-dir}/virtualenvs and cache-dir is the
           # shared ~/Library/Caches/pypoetry - not per-runner. Pin the venv
-          # into the runner's own workspace so it can never land in a shared
-          # path, whichever way Poetry decides to materialise it.
-          virtualenvs-in-project: true
-          virtualenvs-path: ${{ github.workspace }}/.venv
+          # into the runner's tool cache so it can never land in a shared
+          # path, and so it survives between jobs: the workspace is wiped by
+          # the next checkout. The lock hash is part of the path, so a
+          # changed lock file starts from a clean virtualenv instead of
+          # inheriting packages the new lock no longer pins.
+          virtualenvs-in-project: "false"
+          virtualenvs-path: ${{ runner.tool_cache }}/venv/${{ github.repository }}-${{ hashFiles('poetry.lock') }}
+      # Create the virtualenv explicitly, and from the managed interpreter,
+      # BEFORE the cache step: actions/cache refuses to save a path that does
+      # not exist, and Poetry 1.8 does not create the virtualenv until it
+      # installs into it.
+      - name: Select the managed interpreter for Poetry
+        run: poetry env use "$PYTHON"
       - name: Cache dependencies
-        uses: actions/cache@v4
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
         with:
-          path: .venv
+          path: ${{ runner.tool_cache }}/venv/${{ github.repository }}-${{ hashFiles('poetry.lock') }}
           # runner.os is macOS for BOTH r3dlex-runner-1 and r3dlex-runner-2, so
           # it alone would let one runner restore the other's venv - whose
           # console-script shebangs and pyvenv.cfg point at that runner's
           # absolute workspace and interpreter paths. runner.name separates the
           # two runners; python_key is a digest of the interpreter's absolute
-          # path, which also covers a repository rename or a CPython upgrade.
-          key: venv-${{ runner.os }}-${{ runner.name }}-${{ steps.python.outputs.python_key }}-${{ hashFiles('poetry.lock') }}
+          # path AND its full version (patch level included), which also
+          # covers a repository rename or a CPython upgrade; the repository
+          # and the lock hash cover the dependency set.
+          key: venv-${{ runner.os }}-${{ runner.name }}-${{ github.repository }}-${{ steps.python.outputs.python_key }}-${{ hashFiles('poetry.lock') }}
       - name: Install dependencies
         run: poetry install --with dev
       - name: Create dummy .env for CI
         run: cp .env.example .env
+      # snok/install-poetry appends $POETRY_HOME/bin to $GITHUB_PATH, and
+      # GITHUB_PATH entries are prepended - so from that step on, a bare
+      # `python3` could resolve somewhere else than the managed interpreter.
+      # The repo's own code needs Python >= 3.11 (`from datetime import UTC`),
+      # so re-assert the managed interpreter after the last step that touches
+      # PATH instead of trusting the assertion made at setup time.
+      - name: Assert the managed interpreter still wins
+        run: |
+          case "$(command -v python3)" in
+            "${{ steps.python.outputs.python_dir }}"/*) ;;
+            *) echo "::error::python3 no longer resolves to the managed interpreter"; exit 1 ;;
+          esac
       - name: Run CI pipeline
         run: poetry run pipeline ci --json
       - id: mark
@@ -86,22 +146,22 @@ jobs:
     steps:
       - name: Route
         run: echo "self-hosted passed=${{ needs._ci-self-hosted.outputs.passed }}"
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         if: needs._ci-self-hosted.outputs.passed != 'true'
       - name: Set up Python
         if: needs._ci-self-hosted.outputs.passed != 'true'
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
         with:
           python-version: "3.11"
       - name: Install Poetry
         if: needs._ci-self-hosted.outputs.passed != 'true'
-        uses: snok/install-poetry@v1
+        uses: snok/install-poetry@a783c322200f0519c7926aa6faa857c4e23e9263
         with:
           version: "1.8.5"
           virtualenvs-in-project: true
       - name: Cache dependencies
         if: needs._ci-self-hosted.outputs.passed != 'true'
-        uses: actions/cache@v4
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
         with:
           path: .venv
           key: venv-${{ runner.os }}-${{ hashFiles('poetry.lock') }}
@@ -121,11 +181,23 @@ jobs:
   _security-self-hosted:
     name: "Security Pipeline (self-hosted)"
     runs-on: [self-hosted, mac-arm64]
+    # Fork pull requests must never run here. The self-hosted mac runners are
+    # persistent and their $HOME is the operator's real home: it carries the
+    # GitHub OAuth token, the SSH keys and the Docker credentials, and nothing
+    # in the job wipes them. A branch that lives in THIS repository can only
+    # have been pushed by someone who already has write access, so it is
+    # trusted; a branch from a fork is not, and it falls through to the
+    # GitHub-hosted fallback below, which does the same work on GitHub's own
+    # infrastructure.
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
     continue-on-error: true
     # The hosted fallback only starts once this job CONCLUDES, so a runner
     # that dies mid-job would hold the required checks pending for GitHub's
     # default 360-minute timeout. Real work takes ~25 s; 20 minutes is a
-    # generous bound that still fails fast.
+    # generous bound that still fails fast. Note that timeout-minutes bounds
+    # the RUNNING phase only: a job queued behind a busy or offline runner
+    # stays pending until GitHub's own queue timeout expires, so this is not a
+    # bound on how long the queue can hold the required checks.
     timeout-minutes: 20
     env:
       # runner-1 and runner-2 are two runner instances on ONE host that share a
@@ -139,42 +211,82 @@ jobs:
       # (~/Library/Application Support/pypoetry), NOT under POETRY_HOME, and
       # snok/install-poetry rewrites it on every job.
       POETRY_CONFIG_DIR: ${{ github.workspace }}/.poetry-config
-      UV_PYTHON_INSTALL_DIR: ${{ github.workspace }}/.uv-python
     outputs:
       passed: ${{ steps.mark.outputs.passed }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      # uv is a DECLARED, pinned dependency of this workflow. It used to be
+      # picked up from whatever uv happened to be in the runners' shared
+      # $HOME, which is not a dependency but a lottery.
+      - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e
+        with:
+          version: "0.11.19"
       # actions/setup-python cannot run on macOS self-hosted runners: it hardcodes
       # /Users/runner/hostedtoolcache and then `sudo installer`s into /Library/Frameworks.
       # uv's managed CPython is relocatable and user-writable: no sudo, no /Users/runner.
       - id: python
         name: Set up Python
         uses: ./.github/actions/setup-uv-python
+        # The managed interpreter lives in the runner's TOOL CACHE, not in the
+        # workspace: actions/checkout runs `git clean -ffdx` over the workspace
+        # at the start of every job, so an interpreter installed there is
+        # deleted before the next job could reuse it - every job used to
+        # re-download the full 25.8 MiB CPython. The tool cache is per runner
+        # and survives between jobs. The runner context is not available in a
+        # job-level env block, so the path is set on the step that uses it.
+        env:
+          UV_PYTHON_INSTALL_DIR: ${{ runner.tool_cache }}/uv-python
+        with:
+          python-version: "3.11"
+          uv-version: "0.11.19"
       - name: Install Poetry
-        uses: snok/install-poetry@v1
+        uses: snok/install-poetry@a783c322200f0519c7926aa6faa857c4e23e9263
         with:
           version: "1.8.5"
           # Poetry's default is {cache-dir}/virtualenvs and cache-dir is the
           # shared ~/Library/Caches/pypoetry - not per-runner. Pin the venv
-          # into the runner's own workspace so it can never land in a shared
-          # path, whichever way Poetry decides to materialise it.
-          virtualenvs-in-project: true
-          virtualenvs-path: ${{ github.workspace }}/.venv
+          # into the runner's tool cache so it can never land in a shared
+          # path, and so it survives between jobs: the workspace is wiped by
+          # the next checkout. The lock hash is part of the path, so a
+          # changed lock file starts from a clean virtualenv instead of
+          # inheriting packages the new lock no longer pins.
+          virtualenvs-in-project: "false"
+          virtualenvs-path: ${{ runner.tool_cache }}/venv/${{ github.repository }}-${{ hashFiles('poetry.lock') }}
+      # Create the virtualenv explicitly, and from the managed interpreter,
+      # BEFORE the cache step: actions/cache refuses to save a path that does
+      # not exist, and Poetry 1.8 does not create the virtualenv until it
+      # installs into it.
+      - name: Select the managed interpreter for Poetry
+        run: poetry env use "$PYTHON"
       - name: Cache dependencies
-        uses: actions/cache@v4
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
         with:
-          path: .venv
+          path: ${{ runner.tool_cache }}/venv/${{ github.repository }}-${{ hashFiles('poetry.lock') }}
           # runner.os is macOS for BOTH r3dlex-runner-1 and r3dlex-runner-2, so
           # it alone would let one runner restore the other's venv - whose
           # console-script shebangs and pyvenv.cfg point at that runner's
           # absolute workspace and interpreter paths. runner.name separates the
           # two runners; python_key is a digest of the interpreter's absolute
-          # path, which also covers a repository rename or a CPython upgrade.
-          key: venv-${{ runner.os }}-${{ runner.name }}-${{ steps.python.outputs.python_key }}-${{ hashFiles('poetry.lock') }}
+          # path AND its full version (patch level included), which also
+          # covers a repository rename or a CPython upgrade; the repository
+          # and the lock hash cover the dependency set.
+          key: venv-${{ runner.os }}-${{ runner.name }}-${{ github.repository }}-${{ steps.python.outputs.python_key }}-${{ hashFiles('poetry.lock') }}
       - name: Install dependencies
         run: poetry install --with dev
       - name: Create dummy .env for CI
         run: cp .env.example .env
+      # snok/install-poetry appends $POETRY_HOME/bin to $GITHUB_PATH, and
+      # GITHUB_PATH entries are prepended - so from that step on, a bare
+      # `python3` could resolve somewhere else than the managed interpreter.
+      # The repo's own code needs Python >= 3.11 (`from datetime import UTC`),
+      # so re-assert the managed interpreter after the last step that touches
+      # PATH instead of trusting the assertion made at setup time.
+      - name: Assert the managed interpreter still wins
+        run: |
+          case "$(command -v python3)" in
+            "${{ steps.python.outputs.python_dir }}"/*) ;;
+            *) echo "::error::python3 no longer resolves to the managed interpreter"; exit 1 ;;
+          esac
       - name: Run security pipeline
         run: poetry run pipeline security --json
       - id: mark
@@ -189,22 +301,22 @@ jobs:
     steps:
       - name: Route
         run: echo "self-hosted passed=${{ needs._security-self-hosted.outputs.passed }}"
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         if: needs._security-self-hosted.outputs.passed != 'true'
       - name: Set up Python
         if: needs._security-self-hosted.outputs.passed != 'true'
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
         with:
           python-version: "3.11"
       - name: Install Poetry
         if: needs._security-self-hosted.outputs.passed != 'true'
-        uses: snok/install-poetry@v1
+        uses: snok/install-poetry@a783c322200f0519c7926aa6faa857c4e23e9263
         with:
           version: "1.8.5"
           virtualenvs-in-project: true
       - name: Cache dependencies
         if: needs._security-self-hosted.outputs.passed != 'true'
-        uses: actions/cache@v4
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
         with:
           path: .venv
           key: venv-${{ runner.os }}-${{ hashFiles('poetry.lock') }}
@@ -224,11 +336,23 @@ jobs:
   _docs-self-hosted:
     name: "Docs Pipeline (self-hosted)"
     runs-on: [self-hosted, mac-arm64]
+    # Fork pull requests must never run here. The self-hosted mac runners are
+    # persistent and their $HOME is the operator's real home: it carries the
+    # GitHub OAuth token, the SSH keys and the Docker credentials, and nothing
+    # in the job wipes them. A branch that lives in THIS repository can only
+    # have been pushed by someone who already has write access, so it is
+    # trusted; a branch from a fork is not, and it falls through to the
+    # GitHub-hosted fallback below, which does the same work on GitHub's own
+    # infrastructure.
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
     continue-on-error: true
     # The hosted fallback only starts once this job CONCLUDES, so a runner
     # that dies mid-job would hold the required checks pending for GitHub's
     # default 360-minute timeout. Real work takes ~25 s; 20 minutes is a
-    # generous bound that still fails fast.
+    # generous bound that still fails fast. Note that timeout-minutes bounds
+    # the RUNNING phase only: a job queued behind a busy or offline runner
+    # stays pending until GitHub's own queue timeout expires, so this is not a
+    # bound on how long the queue can hold the required checks.
     timeout-minutes: 20
     env:
       # runner-1 and runner-2 are two runner instances on ONE host that share a
@@ -242,42 +366,82 @@ jobs:
       # (~/Library/Application Support/pypoetry), NOT under POETRY_HOME, and
       # snok/install-poetry rewrites it on every job.
       POETRY_CONFIG_DIR: ${{ github.workspace }}/.poetry-config
-      UV_PYTHON_INSTALL_DIR: ${{ github.workspace }}/.uv-python
     outputs:
       passed: ${{ steps.mark.outputs.passed }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      # uv is a DECLARED, pinned dependency of this workflow. It used to be
+      # picked up from whatever uv happened to be in the runners' shared
+      # $HOME, which is not a dependency but a lottery.
+      - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e
+        with:
+          version: "0.11.19"
       # actions/setup-python cannot run on macOS self-hosted runners: it hardcodes
       # /Users/runner/hostedtoolcache and then `sudo installer`s into /Library/Frameworks.
       # uv's managed CPython is relocatable and user-writable: no sudo, no /Users/runner.
       - id: python
         name: Set up Python
         uses: ./.github/actions/setup-uv-python
+        # The managed interpreter lives in the runner's TOOL CACHE, not in the
+        # workspace: actions/checkout runs `git clean -ffdx` over the workspace
+        # at the start of every job, so an interpreter installed there is
+        # deleted before the next job could reuse it - every job used to
+        # re-download the full 25.8 MiB CPython. The tool cache is per runner
+        # and survives between jobs. The runner context is not available in a
+        # job-level env block, so the path is set on the step that uses it.
+        env:
+          UV_PYTHON_INSTALL_DIR: ${{ runner.tool_cache }}/uv-python
+        with:
+          python-version: "3.11"
+          uv-version: "0.11.19"
       - name: Install Poetry
-        uses: snok/install-poetry@v1
+        uses: snok/install-poetry@a783c322200f0519c7926aa6faa857c4e23e9263
         with:
           version: "1.8.5"
           # Poetry's default is {cache-dir}/virtualenvs and cache-dir is the
           # shared ~/Library/Caches/pypoetry - not per-runner. Pin the venv
-          # into the runner's own workspace so it can never land in a shared
-          # path, whichever way Poetry decides to materialise it.
-          virtualenvs-in-project: true
-          virtualenvs-path: ${{ github.workspace }}/.venv
+          # into the runner's tool cache so it can never land in a shared
+          # path, and so it survives between jobs: the workspace is wiped by
+          # the next checkout. The lock hash is part of the path, so a
+          # changed lock file starts from a clean virtualenv instead of
+          # inheriting packages the new lock no longer pins.
+          virtualenvs-in-project: "false"
+          virtualenvs-path: ${{ runner.tool_cache }}/venv/${{ github.repository }}-${{ hashFiles('poetry.lock') }}
+      # Create the virtualenv explicitly, and from the managed interpreter,
+      # BEFORE the cache step: actions/cache refuses to save a path that does
+      # not exist, and Poetry 1.8 does not create the virtualenv until it
+      # installs into it.
+      - name: Select the managed interpreter for Poetry
+        run: poetry env use "$PYTHON"
       - name: Cache dependencies
-        uses: actions/cache@v4
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
         with:
-          path: .venv
+          path: ${{ runner.tool_cache }}/venv/${{ github.repository }}-${{ hashFiles('poetry.lock') }}
           # runner.os is macOS for BOTH r3dlex-runner-1 and r3dlex-runner-2, so
           # it alone would let one runner restore the other's venv - whose
           # console-script shebangs and pyvenv.cfg point at that runner's
           # absolute workspace and interpreter paths. runner.name separates the
           # two runners; python_key is a digest of the interpreter's absolute
-          # path, which also covers a repository rename or a CPython upgrade.
-          key: venv-${{ runner.os }}-${{ runner.name }}-${{ steps.python.outputs.python_key }}-${{ hashFiles('poetry.lock') }}
+          # path AND its full version (patch level included), which also
+          # covers a repository rename or a CPython upgrade; the repository
+          # and the lock hash cover the dependency set.
+          key: venv-${{ runner.os }}-${{ runner.name }}-${{ github.repository }}-${{ steps.python.outputs.python_key }}-${{ hashFiles('poetry.lock') }}
       - name: Install dependencies
         run: poetry install --with dev
       - name: Create dummy .env for CI
         run: cp .env.example .env
+      # snok/install-poetry appends $POETRY_HOME/bin to $GITHUB_PATH, and
+      # GITHUB_PATH entries are prepended - so from that step on, a bare
+      # `python3` could resolve somewhere else than the managed interpreter.
+      # The repo's own code needs Python >= 3.11 (`from datetime import UTC`),
+      # so re-assert the managed interpreter after the last step that touches
+      # PATH instead of trusting the assertion made at setup time.
+      - name: Assert the managed interpreter still wins
+        run: |
+          case "$(command -v python3)" in
+            "${{ steps.python.outputs.python_dir }}"/*) ;;
+            *) echo "::error::python3 no longer resolves to the managed interpreter"; exit 1 ;;
+          esac
       - name: Run docs pipeline
         run: poetry run pipeline docs --json
       - id: mark
@@ -292,22 +456,22 @@ jobs:
     steps:
       - name: Route
         run: echo "self-hosted passed=${{ needs._docs-self-hosted.outputs.passed }}"
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         if: needs._docs-self-hosted.outputs.passed != 'true'
       - name: Set up Python
         if: needs._docs-self-hosted.outputs.passed != 'true'
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
         with:
           python-version: "3.11"
       - name: Install Poetry
         if: needs._docs-self-hosted.outputs.passed != 'true'
-        uses: snok/install-poetry@v1
+        uses: snok/install-poetry@a783c322200f0519c7926aa6faa857c4e23e9263
         with:
           version: "1.8.5"
           virtualenvs-in-project: true
       - name: Cache dependencies
         if: needs._docs-self-hosted.outputs.passed != 'true'
-        uses: actions/cache@v4
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
         with:
           path: .venv
           key: venv-${{ runner.os }}-${{ hashFiles('poetry.lock') }}
